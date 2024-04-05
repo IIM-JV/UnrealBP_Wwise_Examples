@@ -48,6 +48,9 @@ SourceArt/**/*.tga
 # Binary Files
 Binaries/*
 Plugins/*/Binaries/*
+!Plugins/Wwise/Binaries/*
+!Plugins/Wwise/Binaries/Win64/*.dll
+!Plugins/Wwise/Binaries/Mac/*.dylib
 
 # Builds
 Build/*
