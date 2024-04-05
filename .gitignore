@@ -51,6 +51,9 @@ Plugins/*/Binaries/*
 !Plugins/Wwise/Binaries/*
 !Plugins/Wwise/Binaries/Win64/*.dll
 !Plugins/Wwise/Binaries/Mac/*.dylib
+!Plugins/WwiseNiagara/Binaries/*
+!Plugins/WwiseNiagara/Binaries/Win64/*.dll
+!Plugins/WwiseNiagara/Binaries/Mac/*.dylib
 
 # Builds
 Build/*
