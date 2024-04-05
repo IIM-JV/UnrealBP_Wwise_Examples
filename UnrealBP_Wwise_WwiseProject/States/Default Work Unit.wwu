@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{2E7B1E38-2A23-46AC-95F1-63D08A6ED408}" SchemaVersion="119">
+	<States>
+		<WorkUnit Name="Default Work Unit" ID="{2E7B1E38-2A23-46AC-95F1-63D08A6ED408}" PersistMode="Standalone">
+			<ChildrenList>
+				<StateGroup Name="MusicMood" ID="{468813D7-D29F-4586-852B-3BB1C02F959E}">
+					<ChildrenList>
+						<State Name="None" ID="{BF5BE3C0-47D3-4F46-8F5A-8F9CB06704E2}"/>
+						<State Name="Happy" ID="{E2814AA3-A738-4636-8391-10B16020D5BC}"/>
+						<State Name="Sad" ID="{8305F016-F2C1-4E1E-9729-3A6D15D5D834}"/>
+					</ChildrenList>
+				</StateGroup>
+			</ChildrenList>
+		</WorkUnit>
+	</States>
+</WwiseDocument>

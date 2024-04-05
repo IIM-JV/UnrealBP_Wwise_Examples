@@ -1,0 +1,500 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Mac",
+  "BasePlatform": "Mac",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "150",
+  "RootPaths": {
+   "ProjectRoot": "../..",
+   "SourceFilesRoot": "../../.cache/Mac",
+   "SoundBanksRoot": ".",
+   "ExternalSourcesInputFile": "",
+   "ExternalSourcesOutputRoot": "."
+  },
+  "DialogueEvents": [],
+  "SoundBanks": [
+   {
+    "Id": "1355168291",
+    "Type": "User",
+    "GUID": "{701ECBBD-9C7B-4030-8CDB-749EE5D1C7B9}",
+    "Language": "SFX",
+    "Hash": "{AE2BCB67-3162-CB8B-843E-3D7D5D76F2DA}",
+    "ObjectPath": "Init",
+    "ShortName": "Init",
+    "Path": "Init.bnk",
+    "Plugins": {
+     "AudioDevices": [
+      {
+       "Id": "2317455096",
+       "Name": "No_Output",
+       "ObjectPath": "\\Audio Devices\\Default Work Unit\\No_Output",
+       "GUID": "{CFFFDBF9-13D5-4355-911B-7F65113F9F7A}",
+       "LibName": "No Output",
+       "LibId": "11862023"
+      },
+      {
+       "Id": "3859886410",
+       "Name": "System",
+       "ObjectPath": "\\Audio Devices\\Default Work Unit\\System",
+       "GUID": "{FC10F005-5DAA-44A0-AC32-843C19B92623}",
+       "LibName": "System",
+       "LibId": "11403271"
+      }
+     ]
+    },
+    "Busses": [
+     {
+      "Id": "3803692087",
+      "Name": "Master Audio Bus",
+      "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus",
+      "GUID": "{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}"
+     }
+    ],
+    "GameParameters": [
+     {
+      "Id": "3663476645",
+      "Name": "HeartbeatVolume",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\HeartbeatVolume",
+      "GUID": "{A12C79EC-1E1A-42BA-BFB8-B4852A7EF770}"
+     }
+    ],
+    "StateGroups": [
+     {
+      "Id": "339754815",
+      "Name": "MusicMood",
+      "ObjectPath": "\\States\\Default Work Unit\\MusicMood",
+      "GUID": "{468813D7-D29F-4586-852B-3BB1C02F959E}",
+      "States": [
+       {
+        "Id": "443572635",
+        "Name": "Sad",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\Sad",
+        "GUID": "{8305F016-F2C1-4E1E-9729-3A6D15D5D834}"
+       },
+       {
+        "Id": "748895195",
+        "Name": "None",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\None",
+        "GUID": "{BF5BE3C0-47D3-4F46-8F5A-8F9CB06704E2}"
+       },
+       {
+        "Id": "1427264549",
+        "Name": "Happy",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\Happy",
+        "GUID": "{E2814AA3-A738-4636-8391-10B16020D5BC}"
+       }
+      ]
+     }
+    ],
+    "SwitchGroups": [
+     {
+      "Id": "4203814010",
+      "Name": "FootstepGround",
+      "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround",
+      "GUID": "{59C0F4EC-32DE-4E7D-BD21-CE68667E68BC}",
+      "Switches": [
+       {
+        "Id": "787898836",
+        "Name": "Snow",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Snow",
+        "GUID": "{E5C0247B-7917-4273-ADE2-860EFD297DEE}"
+       },
+       {
+        "Id": "2195636714",
+        "Name": "Dirt",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Dirt",
+        "GUID": "{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}"
+       },
+       {
+        "Id": "2637588553",
+        "Name": "Tile",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Tile",
+        "GUID": "{4A29AFC4-BD78-4938-B364-AD6A1A38E30D}"
+       },
+       {
+        "Id": "2654748154",
+        "Name": "Water",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Water",
+        "GUID": "{9ADD6ACC-7D18-4392-BE96-43A8396B9981}"
+       },
+       {
+        "Id": "4044382372",
+        "Name": "DeepWater",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\DeepWater",
+        "GUID": "{F9A2EE92-2F12-4C28-BD72-693F1D4B2E5B}"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "Id": "2880737896",
+    "Type": "User",
+    "GUID": "{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}",
+    "Language": "SFX",
+    "Hash": "{6590A2F5-B807-6779-22F5-B8B71FCFBF28}",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\MainBank",
+    "ShortName": "MainBank",
+    "Path": "MainBank.bnk",
+    "Media": [
+     {
+      "Id": "8329402",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "footsteps.wav",
+      "CachePath": "SFX/footsteps_2C68707F.wem"
+     },
+     {
+      "Id": "54523297",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "footsteps.wav",
+      "CachePath": "SFX/footsteps_71354518.wem"
+     },
+     {
+      "Id": "82484177",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "footsteps.wav",
+      "CachePath": "SFX/footsteps_6005B77E.wem"
+     },
+     {
+      "Id": "142720177",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "footsteps.wav",
+      "CachePath": "SFX/footsteps_602CCC96.wem"
+     },
+     {
+      "Id": "159752141",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "music_sad.wav",
+      "CachePath": "SFX/music_sad_FBC78EF0.wem"
+     },
+     {
+      "Id": "198988922",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "voice_05.wav",
+      "CachePath": "SFX/voice_05_818F3B66.wem"
+     },
+     {
+      "Id": "205011271",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "voice_04.wav",
+      "CachePath": "SFX/voice_04_818F3B66.wem"
+     },
+     {
+      "Id": "323996350",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "voice_02.wav",
+      "CachePath": "SFX/voice_02_818F3B66.wem"
+     },
+     {
+      "Id": "409211353",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "music_happy.wav",
+      "CachePath": "SFX/music_happy_FBC78EF0.wem"
+     },
+     {
+      "Id": "448581091",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "heartbeat.wav",
+      "CachePath": "SFX/heartbeat_CD2FC848.wem"
+     },
+     {
+      "Id": "615935728",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "footsteps.wav",
+      "CachePath": "SFX/footsteps_C8D82F86.wem"
+     },
+     {
+      "Id": "696380050",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "voice_03.wav",
+      "CachePath": "SFX/voice_03_818F3B66.wem"
+     },
+     {
+      "Id": "962874116",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "beep.wav",
+      "CachePath": "SFX/beep_818F3B66.wem"
+     },
+     {
+      "Id": "1002092669",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "voice_01.wav",
+      "CachePath": "SFX/voice_01_818F3B66.wem"
+     }
+    ],
+    "Events": [
+     {
+      "Id": "1172823621",
+      "Name": "PlayBeepEvent",
+      "ObjectPath": "\\Events\\Default Work Unit\\MainEvents\\PlayBeepEvent",
+      "GUID": "{E72163CC-AF05-4D88-A0D9-374F5AF70863}",
+      "DurationType": "OneShot",
+      "DurationMin": "1.076009",
+      "DurationMax": "1.076009",
+      "MediaRefs": [
+       {
+        "Id": "962874116"
+       }
+      ]
+     },
+     {
+      "Id": "506685731",
+      "Name": "PlayFootstepEvent",
+      "ObjectPath": "\\Events\\Default Work Unit\\MainEvents\\PlayFootstepEvent",
+      "GUID": "{4E6FB371-75D2-4EFA-9179-E2B72479D446}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.1684094",
+      "DurationMax": "0.9332505",
+      "SwitchContainers": [
+       {
+        "SwitchValue": {
+         "GroupType": "Switch",
+         "GroupId": "4203814010",
+         "Id": "2195636714",
+         "GUID": "{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "82484177"
+         }
+        ]
+       },
+       {
+        "SwitchValue": {
+         "GroupType": "Switch",
+         "GroupId": "4203814010",
+         "Id": "787898836",
+         "GUID": "{E5C0247B-7917-4273-ADE2-860EFD297DEE}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "54523297"
+         }
+        ]
+       },
+       {
+        "SwitchValue": {
+         "GroupType": "Switch",
+         "GroupId": "4203814010",
+         "Id": "4044382372",
+         "GUID": "{F9A2EE92-2F12-4C28-BD72-693F1D4B2E5B}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "615935728"
+         }
+        ]
+       },
+       {
+        "SwitchValue": {
+         "GroupType": "Switch",
+         "GroupId": "4203814010",
+         "Id": "2637588553",
+         "GUID": "{4A29AFC4-BD78-4938-B364-AD6A1A38E30D}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "8329402"
+         }
+        ]
+       },
+       {
+        "SwitchValue": {
+         "GroupType": "Switch",
+         "GroupId": "4203814010",
+         "Id": "2654748154",
+         "GUID": "{9ADD6ACC-7D18-4392-BE96-43A8396B9981}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "142720177"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "Id": "509271567",
+      "Name": "PlayHeartbeatEvent",
+      "ObjectPath": "\\Events\\Default Work Unit\\MainEvents\\PlayHeartbeatEvent",
+      "GUID": "{ABBF592F-17BA-42ED-A736-CF138D2388F8}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.47206464",
+      "DurationMax": "0.47206464",
+      "MediaRefs": [
+       {
+        "Id": "448581091"
+       }
+      ]
+     },
+     {
+      "Id": "92203756",
+      "Name": "PlayMusicEvent",
+      "ObjectPath": "\\Events\\Default Work Unit\\MainEvents\\PlayMusicEvent",
+      "GUID": "{B26C4001-5A85-48E2-9893-09909EFBE1C0}",
+      "DurationType": "Infinite",
+      "SwitchContainers": [
+       {
+        "SwitchValue": {
+         "GroupType": "State",
+         "GroupId": "339754815",
+         "Id": "1427264549",
+         "GUID": "{E2814AA3-A738-4636-8391-10B16020D5BC}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "409211353"
+         }
+        ]
+       },
+       {
+        "SwitchValue": {
+         "GroupType": "State",
+         "GroupId": "339754815",
+         "Id": "443572635",
+         "GUID": "{8305F016-F2C1-4E1E-9729-3A6D15D5D834}"
+        },
+        "MediaRefs": [
+         {
+          "Id": "159752141"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "Id": "1608415427",
+      "Name": "PlayRobotVoiceEvent",
+      "ObjectPath": "\\Events\\Default Work Unit\\MainEvents\\PlayRobotVoiceEvent",
+      "GUID": "{851DFD03-2412-4537-962A-1F3F16D6AF7E}",
+      "DurationType": "OneShot",
+      "DurationMin": "0.055104166",
+      "DurationMax": "0.1",
+      "MediaRefs": [
+       {
+        "Id": "198988922"
+       },
+       {
+        "Id": "205011271"
+       },
+       {
+        "Id": "323996350"
+       },
+       {
+        "Id": "696380050"
+       },
+       {
+        "Id": "1002092669"
+       }
+      ]
+     }
+    ],
+    "GameParameters": [
+     {
+      "Id": "3663476645",
+      "Name": "HeartbeatVolume",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\HeartbeatVolume",
+      "GUID": "{A12C79EC-1E1A-42BA-BFB8-B4852A7EF770}"
+     }
+    ],
+    "StateGroups": [
+     {
+      "Id": "339754815",
+      "Name": "MusicMood",
+      "ObjectPath": "\\States\\Default Work Unit\\MusicMood",
+      "GUID": "{468813D7-D29F-4586-852B-3BB1C02F959E}",
+      "States": [
+       {
+        "Id": "443572635",
+        "Name": "Sad",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\Sad",
+        "GUID": "{8305F016-F2C1-4E1E-9729-3A6D15D5D834}"
+       },
+       {
+        "Id": "748895195",
+        "Name": "None",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\None",
+        "GUID": "{BF5BE3C0-47D3-4F46-8F5A-8F9CB06704E2}"
+       },
+       {
+        "Id": "1427264549",
+        "Name": "Happy",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\Happy",
+        "GUID": "{E2814AA3-A738-4636-8391-10B16020D5BC}"
+       }
+      ]
+     }
+    ],
+    "SwitchGroups": [
+     {
+      "Id": "4203814010",
+      "Name": "FootstepGround",
+      "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround",
+      "GUID": "{59C0F4EC-32DE-4E7D-BD21-CE68667E68BC}",
+      "Switches": [
+       {
+        "Id": "787898836",
+        "Name": "Snow",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Snow",
+        "GUID": "{E5C0247B-7917-4273-ADE2-860EFD297DEE}"
+       },
+       {
+        "Id": "2195636714",
+        "Name": "Dirt",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Dirt",
+        "GUID": "{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}"
+       },
+       {
+        "Id": "2637588553",
+        "Name": "Tile",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Tile",
+        "GUID": "{4A29AFC4-BD78-4938-B364-AD6A1A38E30D}"
+       },
+       {
+        "Id": "2654748154",
+        "Name": "Water",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Water",
+        "GUID": "{9ADD6ACC-7D18-4392-BE96-43A8396B9981}"
+       },
+       {
+        "Id": "4044382372",
+        "Name": "DeepWater",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\DeepWater",
+        "GUID": "{F9A2EE92-2F12-4C28-BD72-693F1D4B2E5B}"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "FileHash": "{8A5A40C9-FCAC-31EE-6C7B-96177F5DF377}"
+ }
+}

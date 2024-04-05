@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{C1342899-2E71-40ED-9475-10AAB316058A}" SchemaVersion="119">
+	<Events>
+		<WorkUnit Name="Default Work Unit" ID="{C1342899-2E71-40ED-9475-10AAB316058A}" PersistMode="Standalone">
+			<ChildrenList>
+				<Folder Name="MainEvents" ID="{A7CB96EF-F52F-4FE6-AAEB-758E9DBCF6A1}" ShortID="723277004">
+					<ChildrenList>
+						<Event Name="PlayBeepEvent" ID="{E72163CC-AF05-4D88-A0D9-374F5AF70863}">
+							<ChildrenList>
+								<Action Name="" ID="{4D2C308C-AA20-4A0F-B506-FE09E4F69BFC}" ShortID="906426824">
+									<ReferenceList>
+										<Reference Name="Target">
+											<ObjectRef Name="Beep" ID="{DCA35908-3EDB-4308-8090-1975BFAD2EAE}" WorkUnitID="{64B9E6DA-C536-4B25-98CD-383C63C2D7B5}"/>
+										</Reference>
+									</ReferenceList>
+								</Action>
+							</ChildrenList>
+						</Event>
+						<Event Name="PlayRobotVoiceEvent" ID="{851DFD03-2412-4537-962A-1F3F16D6AF7E}">
+							<ChildrenList>
+								<Action Name="" ID="{37BA87AC-90C2-4421-AD5D-D397B00EB2C1}" ShortID="773782062">
+									<ReferenceList>
+										<Reference Name="Target">
+											<ObjectRef Name="RobotVoice" ID="{44A6489F-A2C9-49D7-B26F-6C02C6FDAC64}" WorkUnitID="{64B9E6DA-C536-4B25-98CD-383C63C2D7B5}"/>
+										</Reference>
+									</ReferenceList>
+								</Action>
+							</ChildrenList>
+						</Event>
+						<Event Name="PlayFootstepEvent" ID="{4E6FB371-75D2-4EFA-9179-E2B72479D446}">
+							<ChildrenList>
+								<Action Name="" ID="{2B6BFC00-AF61-494D-9F04-2A1F9F51352D}" ShortID="4201601">
+									<ReferenceList>
+										<Reference Name="Target">
+											<ObjectRef Name="Footsteps" ID="{1E4A6A5E-D867-4221-933C-EEF0AA7BD60A}" WorkUnitID="{64B9E6DA-C536-4B25-98CD-383C63C2D7B5}"/>
+										</Reference>
+									</ReferenceList>
+								</Action>
+							</ChildrenList>
+						</Event>
+						<Event Name="PlayHeartbeatEvent" ID="{ABBF592F-17BA-42ED-A736-CF138D2388F8}">
+							<ChildrenList>
+								<Action Name="" ID="{5D46CB33-A085-4787-AAC0-A10D4F7137DD}" ShortID="264206806">
+									<ReferenceList>
+										<Reference Name="Target">
+											<ObjectRef Name="Heartbeat" ID="{BAA54EA2-C88D-4EF1-8692-8A7197004A62}" WorkUnitID="{64B9E6DA-C536-4B25-98CD-383C63C2D7B5}"/>
+										</Reference>
+									</ReferenceList>
+								</Action>
+							</ChildrenList>
+						</Event>
+						<Event Name="PlayMusicEvent" ID="{B26C4001-5A85-48E2-9893-09909EFBE1C0}">
+							<ChildrenList>
+								<Action Name="" ID="{E6320E0A-4DEC-4D99-992D-CB723BEF96CA}" ShortID="276679519">
+									<ReferenceList>
+										<Reference Name="Target">
+											<ObjectRef Name="Music" ID="{0B3F8A61-CB66-4C46-8290-26AE7C2776A2}" WorkUnitID="{241380A9-B94D-4BAB-83E4-E95E8495B956}"/>
+										</Reference>
+									</ReferenceList>
+								</Action>
+							</ChildrenList>
+						</Event>
+					</ChildrenList>
+				</Folder>
+			</ChildrenList>
+		</WorkUnit>
+	</Events>
+</WwiseDocument>

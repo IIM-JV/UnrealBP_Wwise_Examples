@@ -1,0 +1,125 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Mac",
+  "BasePlatform": "Mac",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "150",
+  "SoundBanks": [
+   {
+    "Id": "1355168291",
+    "Type": "User",
+    "GUID": "{701ECBBD-9C7B-4030-8CDB-749EE5D1C7B9}",
+    "Language": "SFX",
+    "Hash": "{AE2BCB67-3162-CB8B-843E-3D7D5D76F2DA}",
+    "ObjectPath": "Init",
+    "ShortName": "Init",
+    "Path": "Init.bnk",
+    "Plugins": {
+     "AudioDevices": [
+      {
+       "Id": "2317455096",
+       "Name": "No_Output",
+       "ObjectPath": "\\Audio Devices\\Default Work Unit\\No_Output",
+       "GUID": "{CFFFDBF9-13D5-4355-911B-7F65113F9F7A}",
+       "LibName": "No Output",
+       "LibId": "11862023"
+      },
+      {
+       "Id": "3859886410",
+       "Name": "System",
+       "ObjectPath": "\\Audio Devices\\Default Work Unit\\System",
+       "GUID": "{FC10F005-5DAA-44A0-AC32-843C19B92623}",
+       "LibName": "System",
+       "LibId": "11403271"
+      }
+     ]
+    },
+    "Busses": [
+     {
+      "Id": "3803692087",
+      "Name": "Master Audio Bus",
+      "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus",
+      "GUID": "{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}"
+     }
+    ],
+    "GameParameters": [
+     {
+      "Id": "3663476645",
+      "Name": "HeartbeatVolume",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\HeartbeatVolume",
+      "GUID": "{A12C79EC-1E1A-42BA-BFB8-B4852A7EF770}"
+     }
+    ],
+    "StateGroups": [
+     {
+      "Id": "339754815",
+      "Name": "MusicMood",
+      "ObjectPath": "\\States\\Default Work Unit\\MusicMood",
+      "GUID": "{468813D7-D29F-4586-852B-3BB1C02F959E}",
+      "States": [
+       {
+        "Id": "443572635",
+        "Name": "Sad",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\Sad",
+        "GUID": "{8305F016-F2C1-4E1E-9729-3A6D15D5D834}"
+       },
+       {
+        "Id": "748895195",
+        "Name": "None",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\None",
+        "GUID": "{BF5BE3C0-47D3-4F46-8F5A-8F9CB06704E2}"
+       },
+       {
+        "Id": "1427264549",
+        "Name": "Happy",
+        "ObjectPath": "\\States\\Default Work Unit\\MusicMood\\Happy",
+        "GUID": "{E2814AA3-A738-4636-8391-10B16020D5BC}"
+       }
+      ]
+     }
+    ],
+    "SwitchGroups": [
+     {
+      "Id": "4203814010",
+      "Name": "FootstepGround",
+      "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround",
+      "GUID": "{59C0F4EC-32DE-4E7D-BD21-CE68667E68BC}",
+      "Switches": [
+       {
+        "Id": "787898836",
+        "Name": "Snow",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Snow",
+        "GUID": "{E5C0247B-7917-4273-ADE2-860EFD297DEE}"
+       },
+       {
+        "Id": "2195636714",
+        "Name": "Dirt",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Dirt",
+        "GUID": "{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}"
+       },
+       {
+        "Id": "2637588553",
+        "Name": "Tile",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Tile",
+        "GUID": "{4A29AFC4-BD78-4938-B364-AD6A1A38E30D}"
+       },
+       {
+        "Id": "2654748154",
+        "Name": "Water",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\Water",
+        "GUID": "{9ADD6ACC-7D18-4392-BE96-43A8396B9981}"
+       },
+       {
+        "Id": "4044382372",
+        "Name": "DeepWater",
+        "ObjectPath": "\\Switches\\Default Work Unit\\FootstepGround\\DeepWater",
+        "GUID": "{F9A2EE92-2F12-4C28-BD72-693F1D4B2E5B}"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "FileHash": "{C08B5A84-6453-D487-C190-4EFD7AA17158}"
+ }
+}

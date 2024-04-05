@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{A08DA53D-2FA7-4FC1-9328-A935C8D44D80}" SchemaVersion="119">
+	<GameParameters>
+		<WorkUnit Name="Default Work Unit" ID="{A08DA53D-2FA7-4FC1-9328-A935C8D44D80}" PersistMode="Standalone">
+			<ChildrenList>
+				<GameParameter Name="HeartbeatVolume" ID="{A12C79EC-1E1A-42BA-BFB8-B4852A7EF770}"/>
+			</ChildrenList>
+		</WorkUnit>
+	</GameParameters>
+</WwiseDocument>

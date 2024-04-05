@@ -1,0 +1,44 @@
+Event	ID	Name			Wwise Object Path	Notes
+	92203756	PlayMusicEvent			\Default Work Unit\MainEvents\PlayMusicEvent	
+	506685731	PlayFootstepEvent			\Default Work Unit\MainEvents\PlayFootstepEvent	
+	509271567	PlayHeartbeatEvent			\Default Work Unit\MainEvents\PlayHeartbeatEvent	
+	1172823621	PlayBeepEvent			\Default Work Unit\MainEvents\PlayBeepEvent	
+	1608415427	PlayRobotVoiceEvent			\Default Work Unit\MainEvents\PlayRobotVoiceEvent	
+
+Switch Group	ID	Name			Wwise Object Path	Notes
+	4203814010	FootstepGround			\Default Work Unit\FootstepGround	
+
+Switch	ID	Name	Switch Group			Notes
+	787898836	Snow	FootstepGround			
+	2195636714	Dirt	FootstepGround			
+	2637588553	Tile	FootstepGround			
+	2654748154	Water	FootstepGround			
+	4044382372	DeepWater	FootstepGround			
+
+State Group	ID	Name			Wwise Object Path	Notes
+	339754815	MusicMood			\Default Work Unit\MusicMood	
+
+State	ID	Name	State Group			Notes
+	443572635	Sad	MusicMood			
+	748895195	None	MusicMood			
+	1427264549	Happy	MusicMood			
+
+Game Parameter	ID	Name			Wwise Object Path	Notes
+	3663476645	HeartbeatVolume			\Default Work Unit\HeartbeatVolume	
+
+In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
+	8329402	FootstepTile	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\footsteps_2C68707F.wem		\Actor-Mixer Hierarchy\Default Work Unit\Footsteps\FootstepTile		16262
+	54523297	FootstepSnow	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\footsteps_71354518.wem		\Actor-Mixer Hierarchy\Default Work Unit\Footsteps\FootstepSnow		57388
+	82484177	FootstepDirt	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\footsteps_6005B77E.wem		\Actor-Mixer Hierarchy\Default Work Unit\Footsteps\FootstepDirt		37060
+	142720177	FootstepWater	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\footsteps_602CCC96.wem		\Actor-Mixer Hierarchy\Default Work Unit\Footsteps\FootstepWater		44652
+	159752141	music_sad	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\music_sad_FBC78EF0.wem		\Interactive Music Hierarchy\Default Work Unit\Music\Sad\music_sad\music_sad		5644960
+	198988922	voice_05	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\voice_05_818F3B66.wem		\Actor-Mixer Hierarchy\Default Work Unit\RobotVoice\voice_05		18832
+	205011271	voice_04	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\voice_04_818F3B66.wem		\Actor-Mixer Hierarchy\Default Work Unit\RobotVoice\voice_04		14168
+	323996350	voice_02	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\voice_02_818F3B66.wem		\Actor-Mixer Hierarchy\Default Work Unit\RobotVoice\voice_02		11920
+	409211353	music_happy	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\music_happy_FBC78EF0.wem		\Interactive Music Hierarchy\Default Work Unit\Music\Happy\music_happy\music_happy		8169228
+	448581091	Heartbeat	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\heartbeat_CD2FC848.wem		\Actor-Mixer Hierarchy\Default Work Unit\Heartbeat		83368
+	615935728	FootstepDeepWater	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\footsteps_C8D82F86.wem		\Actor-Mixer Hierarchy\Default Work Unit\Footsteps\FootstepDeepWater		89688
+	696380050	voice_03	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\voice_03_818F3B66.wem		\Actor-Mixer Hierarchy\Default Work Unit\RobotVoice\voice_03		19296
+	962874116	Beep	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\beep_818F3B66.wem		\Actor-Mixer Hierarchy\Default Work Unit\Beep		189904
+	1002092669	voice_01	C:\Works\UnrealBP_Wwise\UnrealBP_Wwise_WwiseProject\.cache\Windows\SFX\voice_01_818F3B66.wem		\Actor-Mixer Hierarchy\Default Work Unit\RobotVoice\voice_01		10676
+
