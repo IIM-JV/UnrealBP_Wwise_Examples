@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -23,6 +23,7 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "AkAudioEvent.h"
 #include "AkComponentCallbackManager.h"
 #include "AkRtpc.h"
+#include "AkSettings.h"
 #include "Wwise/WwiseExternalSourceManager.h"
 #include "Wwise/API/WwiseSoundEngineAPI.h"
 
@@ -71,9 +72,26 @@ public:
 };
 
 UAkGameObject::UAkGameObject(const class FObjectInitializer& ObjectInitializer) :
-Super(ObjectInitializer)
+	Super(ObjectInitializer)
 {
 	bEventPosted = false;
+
+}
+
+float UAkGameObject::GetAttenuationScalingFactor() const
+{
+	return AttenuationScalingFactor;
+}
+
+bool UAkGameObject::SetAttenuationScalingFactor()
+{
+	AKRESULT result = AK_Fail;
+	if (FAkAudioDevice* AudioDevice = FAkAudioDevice::Get())
+	{
+		result = AudioDevice->SetAttenuationScalingFactor(this, AttenuationScalingFactor);
+	}
+
+	return result == AK_Success;
 }
 
 int32 UAkGameObject::PostAssociatedAkEvent(int32 CallbackMask, const FOnAkPostEventCallback& PostEventCallback)
@@ -224,7 +242,7 @@ AkGameObjectID UAkGameObject::GetAkGameObjectID() const
 
 void UAkGameObject::Stop()
 {
-	if (HasActiveEvents() && FAkAudioDevice::Get() && IsRegisteredWithWwise)
+	if (HasActiveEvents() && FAkAudioDevice::Get() && bIsRegisteredWithWwise)
 	{
 		auto* SoundEngine = IWwiseSoundEngineAPI::Get();
 		if (UNLIKELY(!SoundEngine)) return;
@@ -239,3 +257,52 @@ bool UAkGameObject::HasActiveEvents() const
 	auto CallbackManager = FAkComponentCallbackManager::GetInstance();
 	return (CallbackManager != nullptr) && CallbackManager->HasActiveEvents(GetAkGameObjectID());
 }
+
+void UAkGameObject::SetAttenuationScalingFactor(float InAttenuationScalingFactor)
+{
+	if (InAttenuationScalingFactor <= 0.f)
+	{
+		UE_LOG(LogAkAudio, Warning, TEXT("UAkGameObject::SetAttenuationScalingFactor: Attenuation scaling factor of %s is zero or a negative number."), *GetName());
+	}
+	else if (AttenuationScalingFactor != InAttenuationScalingFactor)
+	{
+		AttenuationScalingFactor = InAttenuationScalingFactor;
+		SetAttenuationScalingFactor();
+	}
+}
+
+#if WITH_EDITOR
+void UAkGameObject::PreEditChange(FProperty* PropertyAboutToChange)
+{
+	if (PropertyAboutToChange != nullptr)
+	{
+		if (PropertyAboutToChange->NamePrivate == GET_MEMBER_NAME_CHECKED(UAkGameObject, AttenuationScalingFactor))
+		{
+			PreviousAttenuationScalingFactor = AttenuationScalingFactor;
+		}
+	}
+
+	Super::PreEditChange(PropertyAboutToChange);
+}
+
+void UAkGameObject::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.Property)
+	{
+		if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UAkGameObject, AttenuationScalingFactor))
+		{
+			if (AttenuationScalingFactor <= 0.f)
+			{
+				AttenuationScalingFactor = PreviousAttenuationScalingFactor;
+				UE_LOG(LogAkAudio, Warning, TEXT("UAkGameObject::PostEditChangeProperty: Attenuation scaling factor of %s is zero or a negative number."), *GetName());
+			}
+			else
+			{
+				SetAttenuationScalingFactor();
+			}
+		}
+	}
+}
+#endif

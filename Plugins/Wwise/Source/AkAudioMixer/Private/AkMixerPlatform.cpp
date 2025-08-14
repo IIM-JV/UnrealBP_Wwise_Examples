@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "AkMixerPlatform.h"
@@ -28,24 +28,23 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "CoreGlobals.h"
 #include "UObject/UObjectGlobals.h"
 
-#if WITH_ENGINE
+#if WITH_ENGINE && !UE_5_4_OR_LATER
 #include "AudioPluginUtilities.h"
 #include "OpusAudioInfo.h"
 #include "VorbisAudioInfo.h"
 #include "ADPCMAudioInfo.h"
 #endif // WITH_ENGINE
 
-#if UE_5_0_OR_LATER
 #include "BinkAudioInfo.h"
-#endif
-
 
 DECLARE_LOG_CATEGORY_EXTERN(LogAkAudioMixer, Log, All);
 DEFINE_LOG_CATEGORY(LogAkAudioMixer);
 
+#if !UE_5_4_OR_LATER
 FName FAkMixerPlatform::NAME_OGG(TEXT("OGG"));
 FName FAkMixerPlatform::NAME_OPUS(TEXT("OPUS"));
 FName FAkMixerPlatform::NAME_ADPCM(TEXT("ADPCM"));
+#endif
 
 
 FAkMixerPlatform::FAkMixerPlatform() :
@@ -56,7 +55,7 @@ FAkMixerPlatform::FAkMixerPlatform() :
 	OutputBuffer(nullptr),
 	OutputBufferByteLength(0)
 {
-#if !WITH_EDITOR
+#if !WITH_EDITOR && !UE_5_4_OR_LATER
 	LoadVorbisLibraries();
 #endif
 }
@@ -436,7 +435,8 @@ void FAkMixerPlatform::SubmitBuffer(const uint8* Buffer)
 	}
 }
 
-#if UE_5_0_OR_LATER
+#if !UE_5_4_OR_LATER
+
 FName FAkMixerPlatform::GetRuntimeFormat(const USoundWave* InSoundWave) const
 {
 	const FName RuntimeFormat = Audio::ToName(InSoundWave->GetSoundAssetCompressionType());
@@ -462,7 +462,7 @@ FName FAkMixerPlatform::GetRuntimeFormat(const USoundWave* InSoundWave) const
 			return Audio::NAME_OPUS;
 		}
 		return Audio::NAME_OGG;
-#endif
+#endif // defined(PLATFORM_PS5) && PLATFORM_PS5
 	}
 	return RuntimeFormat;
 }
@@ -492,83 +492,7 @@ ICompressedAudioInfo* FAkMixerPlatform::CreateCompressedAudioInfo(const FName& I
 	ensureMsgf(Decoder != nullptr, TEXT("Failed to create a sound asset decoder for compression type: %s"), *InRuntimeFormat.ToString());
 	return Decoder;
 }
-
-#else	// UE4.27
-
-FName FAkMixerPlatform::GetRuntimeFormat(USoundWave* InSoundWave)
-{
-#if WITH_ENGINE
-	check(InSoundWave);
-#if defined(PLATFORM_PS5) && PLATFORM_PS5
-	static FName NAME_ADPCM(TEXT("ADPCM"));
-
-	if (InSoundWave->IsStreaming() && InSoundWave->IsSeekableStreaming())
-	{
-		return NAME_ADPCM;
-	}
-
-	checkf(false, TEXT("Please set your Unreal audio sources to Streaming and Seekable in order to play them through Wwise on the PS5"));
-	return NAME_ADPCM;
-#else
-	if (InSoundWave->IsStreaming(nullptr))
-	{
-		if (InSoundWave->IsSeekableStreaming())
-		{
-			return NAME_ADPCM;
-		}
-
-		return NAME_OPUS;
-	}
-	return NAME_OGG;
-#endif
-#else
-	checkNoEntry();
-	return FName();
-#endif // WITH_ENGINE
-}
-
-bool FAkMixerPlatform::HasCompressedAudioInfoClass(USoundWave* InSoundWave)
-{
-	return true;
-}
-
-ICompressedAudioInfo* FAkMixerPlatform::CreateCompressedAudioInfo(USoundWave* InSoundWave)
-{
-#if WITH_ENGINE
-	check(InSoundWave);
-
-#if defined(PLATFORM_PS5) && PLATFORM_PS5
-	if (InSoundWave->IsStreaming() && InSoundWave->IsSeekableStreaming())
-	{
-		return new FADPCMAudioInfo();
-	}
-
-	checkf(false, TEXT("Please set your Unreal audio sources to Streaming and Seekable in order to play them through Wwise on the PS5"));
-	return new FADPCMAudioInfo();
-#else
-	if (InSoundWave->IsStreaming())
-	{
-		if (InSoundWave->IsSeekableStreaming())
-		{
-			return new FADPCMAudioInfo();
-		}
-
-		return new FOpusAudioInfo();
-	}
-
-	if (InSoundWave->HasCompressedData(NAME_OGG))
-	{
-		return new FVorbisAudioInfo();
-	}
-
-	return new FADPCMAudioInfo();
-#endif
-#else
-	checkNoEntry();
-	return nullptr;
-#endif // WITH_ENGINE
-}
-#endif
+#endif // !UE_5_4_OR_LATER
 
 FString FAkMixerPlatform::GetDefaultDeviceName() {
 	static FString DefaultName(TEXT("Wwise Audio Mixer Device."));

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -22,7 +22,6 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "IWwiseBrowserDataSource.h"
 #include "WwiseItemType.h"
 #include "../WwiseBrowserForwards.h"
-#include "WaapiPicker/SWaapiPicker.h"
 
 class FJsonValue;
 class FJsonObject;
@@ -34,7 +33,8 @@ enum EWwiseConnectionStatus
 	Connected,
 	SettingDisabled,
 	WrongProjectOpened,
-	WwiseNotOpen
+	WwiseNotOpen,
+	WrongRootOutputPath
 };
 
 struct WaapiTransformStringField
@@ -51,6 +51,13 @@ struct WWiseWaapiItem
 	FName FullPath;
 };
 
+struct TransformStringField
+{
+	const FString keyArg;
+	const TArray<FString> valueStringArgs;
+	const TArray<int32> valueNumberArgs;
+};
+
 class FWaapiDataSource : IWwiseBrowserDataSource
 {
 public :
@@ -64,7 +71,7 @@ public :
 	// Sets up the connection to WAAPI
 	virtual bool Init() override;
 
-	virtual void ConstructTree(bool bShouldRefresh) override;
+	virtual bool ConstructTree(bool bShouldRefresh) override;
 
 	// Constructs the top-level root for the given type, along with its direct children
 	virtual FWwiseTreeItemPtr ConstructTreeRoot(EWwiseItemType::Type Type) override;

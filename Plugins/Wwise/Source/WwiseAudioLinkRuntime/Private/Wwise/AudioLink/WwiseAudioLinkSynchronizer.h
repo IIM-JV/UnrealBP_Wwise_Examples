@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -35,17 +35,24 @@ struct FWwiseAudioLinkSynchronizer : IAudioLinkSynchronizer, TSharedFromThis<FWw
 	FOnBeginRender	OnBeginRender;
 	FOnEndRender	OnEndRender;
 
-	bool bIsBound { false };
+	enum class ESynchronizerBindingState
+	{
+		Unbound, // Is not bound
+		Bound, // Properly Bound
+		Binding, // Is currently being bound
+	};
+
+	std::atomic<ESynchronizerBindingState> BindingState;
 
 	FWwiseAudioLinkSynchronizer();
 	~FWwiseAudioLinkSynchronizer() override;
 
 	void ExecuteBeginRender(AK::IAkGlobalPluginContext* InContext);
 	void ExecuteEndRender(AK::IAkGlobalPluginContext* InContext);
-	void ExecuteOpenStream();
-	void ExecuteCloseStream();
-	void Bind();
-	void Unbind();
+	bool ExecuteOpenStream();
+	bool ExecuteCloseStream();
+	bool Bind();
+	bool Unbind();
 
 	#define MAKE_DELEGATE_FUNC(X)\
 		FDelegateHandle Register##X##Delegate(const FOn##X::FDelegate& InDelegate) override\

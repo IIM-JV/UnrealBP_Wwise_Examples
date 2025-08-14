@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "AkAssetFactories.h"
@@ -285,4 +285,29 @@ UAkEffectShareSetFactory::UAkEffectShareSetFactory(const class FObjectInitialize
 UObject* UAkEffectShareSetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
 	return AkAssetFactory_Helper::FactoryCreateNew<UAkEffectShareSet>(Class, InParent, Name, Flags, AssetID, ShortID, WwiseObjectName);
+}
+
+bool UAkEffectShareSetFactory::CanCreateNew() const
+{
+	return AkAssetFactory_Helper::CanCreateNew<UAkEffectShareSet>();
+}
+
+//////////////////////////////////////////////////////////////////////////
+// UAkAkAudioDeviceShareSetFactory
+
+UAkAudioDeviceShareSetFactory::UAkAudioDeviceShareSetFactory(const class FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	SupportedClass = UAkAudioDeviceShareSet::StaticClass();
+	bCreateNew = bEditorImport = bEditAfterNew = true;
+}
+
+UObject* UAkAudioDeviceShareSetFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
+{
+	return AkAssetFactory_Helper::FactoryCreateNew<UAkAudioDeviceShareSet>(Class, InParent, Name, Flags, AssetID, ShortID, WwiseObjectName);
+}
+
+bool UAkAudioDeviceShareSetFactory::CanCreateNew() const
+{
+	return AkAssetFactory_Helper::CanCreateNew<UAkAudioDeviceShareSet>();
 }

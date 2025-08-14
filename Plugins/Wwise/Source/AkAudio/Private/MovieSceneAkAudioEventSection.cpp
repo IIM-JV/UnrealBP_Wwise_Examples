@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "MovieSceneAkAudioEventSection.h"
@@ -65,7 +65,7 @@ namespace AkAudioEventSectionHelper
 void UMovieSceneAkAudioEventSection::Initialize()
 {
 #if WITH_EDITOR
-	if ((Event != nullptr || EventName != "") && InitState != AkEventSectionState::EUnrecognized)
+	if (Event && InitState != AkEventSectionState::EUnrecognized)
 	{
 		UpdateAudioSourceInfo();
 		SubscribeToEventChildAddedRemoved();
@@ -77,7 +77,7 @@ void UMovieSceneAkAudioEventSection::Initialize()
 			{
 				UE_LOG(LogAkAudio, Warning,
 					TEXT("Failed to initialize Section for Event: %s"),
-					Event == nullptr ? *EventName : *(Event->GetName()));
+					*(Event->GetName()));
 
 				//===========================================================
 				// Callback 
@@ -134,8 +134,7 @@ void UMovieSceneAkAudioEventSection::BeginDestroy()
 void UMovieSceneAkAudioEventSection::PostEditChangeProperty(struct FPropertyChangedEvent& e)
 {
 	FName PropertyName = (e.Property != nullptr) ? e.Property->GetFName() : NAME_None;
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UMovieSceneAkAudioEventSection, Event)
-	 || PropertyName == GET_MEMBER_NAME_CHECKED(UMovieSceneAkAudioEventSection, EventName))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UMovieSceneAkAudioEventSection, Event))
 	{
 		UpdateAkEventInfo();
 	}
@@ -285,8 +284,8 @@ void UMovieSceneAkAudioEventSection::SubscribeToEventChildren()
 				for (int descendant = 0; descendant < returnJson.Num(); ++descendant)
 				{
 					auto pJsonObj = returnJson[descendant]->AsObject();
-					auto descendantID = pJsonObj->GetStringField("id");
-					auto descendantType = pJsonObj->GetStringField("type");
+					auto descendantID = pJsonObj->GetStringField(TEXT("id"));
+					auto descendantType = pJsonObj->GetStringField(TEXT("type"));
 
 					if (descendantType.Equals("Action", ESearchCase::IgnoreCase))
 					{
@@ -304,17 +303,17 @@ void UMovieSceneAkAudioEventSection::SubscribeToEventChildren()
 						options->SetArrayField(FAkWaapiClient::WAAPIStrings::RETURN, StructJsonArray);
 
 #if AK_SUPPORT_WAAPI
-						if (pWaapiClient->Call(ak::wwise::core::object::get, args, options, outJsonResult, 500))
+						if (pWaapiClient->Call(ak::wwise::core::object::get, args, options, outJsonResult))
 						{
 							if (outJsonResult->HasField(FAkWaapiClient::WAAPIStrings::RETURN))
 							{
 								TArray<TSharedPtr<FJsonValue>> descendantReturnJson = outJsonResult->GetArrayField(FAkWaapiClient::WAAPIStrings::RETURN);
 								auto pDescendantJsonObj = descendantReturnJson[0]->AsObject();
-								if (pDescendantJsonObj->HasField("@Target"))
+								if (pDescendantJsonObj->HasField(TEXT("@Target")))
 								{
 									/** Subscribe to child added and child removed for the target object. */
-									auto targetObj = pDescendantJsonObj->GetObjectField("@Target");
-									auto targetID = targetObj->GetStringField("id");
+									auto targetObj = pDescendantJsonObj->GetObjectField(TEXT("@Target"));
+									auto targetID = targetObj->GetStringField(TEXT("id"));
 
 									uint64 addedSubID = 0;
 									uint64 removedSubID = 0;
@@ -418,13 +417,7 @@ FGuid UMovieSceneAkAudioEventSection::GetEventWwiseGUID() const
 	{
 		return Event->GetWwiseGuid();
 	}
-	else
-	{
-		UE_LOG(LogAkAudio, Log, TEXT("UMovieSceneAkAudioEventSection: Using deprecated event name to find GUID. Please set the \"Event\" property to a valid AkAudioEvent asset."));
-		FGuid EventGUID;
-		FAkWaapiClient::GetGUIDForObjectOfTypeWithName(EventGUID, "Event", EventName);
-		return EventGUID;
-	}
+	return FGuid();
 }
 
 FString UMovieSceneAkAudioEventSection::GetEventWwiseName() const { return Event->GetWwiseName().ToString(); }
@@ -463,27 +456,15 @@ FFloatRange UMovieSceneAkAudioEventSection::GetEventDuration() const
 	return AkAudioEventSectionHelper::GetDuration(Event, FrameRate);
 }
 
-#if !UE_4_26_OR_LATER
-FMovieSceneEvalTemplatePtr UMovieSceneAkAudioEventSection::GenerateTemplate() const
-{
-	return FMovieSceneAkAudioEventTemplate(this);
-}
-#endif
-
 #if WITH_EDITOR
 /** Associate a new AK audio event with this section. Also updates section time and audio source info. */
-bool UMovieSceneAkAudioEventSection::SetEvent(UAkAudioEvent* AudioEvent, const FString& Name)
+bool UMovieSceneAkAudioEventSection::SetEvent(UAkAudioEvent* AudioEvent)
 {
 	bool dataLoaded = true;
 	// Update the event details.
 	if (AudioEvent != nullptr)
 	{
 		Event = AudioEvent;
-		EventName = Name;
-	}
-	else
-	{
-		EventName = Name;
 	}
 	return UpdateAkEventInfo();
 }
@@ -581,8 +562,8 @@ void UMovieSceneAkAudioEventSection::UpdateAudioSourceInfo()
 {
 	UE_LOG(LogAkAudio, Verbose,
 		TEXT("UMovieSceneAkAudioEventSection::UpdateAudioSourceInfo: Updating section %s source info (Event %s)"),
-		Event == nullptr ? *EventName : *(Event->GetName()),
-		*GetName());
+		*GetName(),
+		Event ? *Event->GetName(): TEXT("None"));
 
 	// Invalidate all audio source info data.
 	InvalidateAudioSourceInfo();
@@ -618,16 +599,16 @@ void UMovieSceneAkAudioEventSection::UpdateAudioSourceInfo()
 		UnsubscribeWAAPICallback(iChildAddedInitializeSubscriptionID);
 		UE_LOG(LogAkAudio, Verbose,
 			TEXT("UMovieSceneAkAudioEventSection::UpdateAudioSourceInfo: Updated section %s source info (Event %s)"),
-			Event == nullptr ? *EventName : *(Event->GetName()),
-			*GetName());
+			*GetName(),
+			Event ? *Event->GetName(): TEXT("None"));
 	}
 	else
 	{
 		InitState = AkEventSectionState::EUnrecognized;
 		UE_LOG(LogAkAudio, Verbose,
 			TEXT("UMovieSceneAkAudioEventSection::UpdateAudioSourceInfo: Failed to update section %s source info (Event %s)"),
-			Event == nullptr ? *EventName : *(Event->GetName()),
-			*GetName());
+			*GetName(),
+			Event ? *Event->GetName(): TEXT("None"));
 	}
 
 	CheckForWorkunitChanges(true);

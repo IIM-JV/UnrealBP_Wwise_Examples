@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -123,4 +123,17 @@ public:
 	UAkEffectShareSetFactory(const class FObjectInitializer& ObjectInitializer);
 
 	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
+	virtual bool CanCreateNew() const override;
+};
+
+UCLASS(hidecategories = Object)
+class UAkAudioDeviceShareSetFactory : public UAkAssetFactory
+{
+	GENERATED_BODY()
+
+public:
+	UAkAudioDeviceShareSetFactory(const class FObjectInitializer& ObjectInitializer);
+
+	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
+	virtual bool CanCreateNew() const override;
 };

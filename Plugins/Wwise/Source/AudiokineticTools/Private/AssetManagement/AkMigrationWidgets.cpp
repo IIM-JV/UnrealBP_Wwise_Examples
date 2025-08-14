@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "AkMigrationWidgets.h" 
@@ -113,8 +113,8 @@ void SMigrationWidget::Construct(const FArguments& InArgs)
 					.AutoWidth()
 					[
 						SNew(SHyperlink)
-						.Text(LOCTEXT("MigrationNotesLink", "Please refer to Wwise 2023.1 migration notes for more information about the migration process."))
-						.OnNavigate_Lambda([=]{ FPlatformProcess::LaunchURL(TEXT("https://www.audiokinetic.com/library/edge/?source=UE4&id=pg_important_migration_notes_2023_1_0.html"), nullptr, nullptr); })
+						.Text(LOCTEXT("MigrationNotesLink", "Please refer to Wwise 2024.1 migration notes for more information about the migration process."))
+						.OnNavigate_Lambda([=]{ FPlatformProcess::LaunchURL(TEXT("https://www.audiokinetic.com/library/edge/?source=UE4&id=pg_important_migration_notes_2024_1_0.html"), nullptr, nullptr); })
 
 					]
 					+ SHorizontalBox::Slot()

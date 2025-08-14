@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -34,9 +34,10 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "Async/Async.h"
 #include "Misc/ScopeLock.h"
 #include "Misc/CoreDelegates.h"
-#include "Wwise/API/WAAPI.h"
 
 #if AK_SUPPORT_WAAPI
+#include "Wwise/API/WAAPI.h"
+
 #include "Misc/App.h"
 #include "Misc/Paths.h"
 #if PLATFORM_WINDOWS
@@ -171,7 +172,7 @@ uint32 FAkWaapiClientConnectionHandler::Run()
 			TSharedRef<FJsonObject> args = MakeShareable(new FJsonObject());
 			TSharedRef<FJsonObject> options = MakeShareable(new FJsonObject());
 			TSharedPtr<FJsonObject> result = MakeShareable(new FJsonObject());
-			m_Client.Call(ak::wwise::core::getInfo, args, options, result, 500, true);
+			m_Client.Call(ak::wwise::core::getInfo, args, options, result, true);
 			WaitEvent->Wait(ConnectionMonitorDelay.GetValue() * 1000);
 			WaitEvent->Reset();
 		}
@@ -457,6 +458,21 @@ bool FAkWaapiClient::IsProjectLoaded()
 #endif
 }
 
+void FAkWaapiClient::ConvertProjectPath(FString& Path)
+{
+#if PLATFORM_MAC
+	if(Path.StartsWith(TEXT("Y:")))
+	{
+		Path.ReplaceInline(TEXT("Y:"), *FPlatformMisc::GetEnvironmentVariable(TEXT("HOME")));
+	}
+	if(Path.StartsWith(TEXT("Z:")))
+	{
+		Path.ReplaceInline(TEXT("Z:"), *FPlatformMisc::GetEnvironmentVariable(TEXT("ROOT")));
+	}
+	Path.ReplaceInline(TEXT("\\"), TEXT("/"));
+#endif
+}
+
 /** This is called when the reconnection handler successfully connects to WAAPI.
 *  We check if the correct project is loaded on a background thread. If it is, we broadcast OnProjectLoaded.
 *  We also subscribe to ak::wwise::core::project::loaded in order to check the project whenever one is loaded.
@@ -558,17 +574,7 @@ FString GetAndWaitForCurrentProject(float RetrySleepTimeSeconds)
 			FPlatformProcess::Sleep(RetrySleepTimeSeconds);
 		}
 	}
-#if PLATFORM_MAC
-	if(ProjectPath.StartsWith(TEXT("Y:")))
-	{
-		ProjectPath.ReplaceInline(TEXT("Y:"), *FPlatformMisc::GetEnvironmentVariable(TEXT("HOME")));
-	}
-	if(ProjectPath.StartsWith(TEXT("Z:")))
-	{
-		ProjectPath.ReplaceInline(TEXT("Z:"), *FPlatformMisc::GetEnvironmentVariable(TEXT("ROOT")));
-	}
-	ProjectPath.ReplaceInline(TEXT("\\"), TEXT("/"));
-#endif
+	FAkWaapiClient::ConvertProjectPath(ProjectPath);
 	return ProjectPath;
 }
 
@@ -807,7 +813,7 @@ bool FAkWaapiClient::RemoveWampEventCallback(const uint64_t in_subscriptionId)
 	return false;
 }
 
-bool FAkWaapiClient::Call(const char* in_uri, const FString& in_args, const FString& in_options, FString& out_result, int in_iTimeoutMs /*= 500*/, bool silenceLog /* = false*/)
+bool FAkWaapiClient::Call(const char* in_uri, const FString& in_args, const FString& in_options, FString& out_result, int in_iTimeoutMs, bool silenceLog /* = false*/)
 {
 	bool eResult = false;
 #if AK_SUPPORT_WAAPI
@@ -840,8 +846,17 @@ bool FAkWaapiClient::Call(const char* in_uri, const FString& in_args, const FStr
 	return eResult;
 }
 
+bool FAkWaapiClient::Call(const char* in_uri, const FString& in_args, const FString& in_options, FString& out_result, bool silenceLog /*= false*/)
+{
+	if (auto UserSettings = GetDefault<UAkSettingsPerUser>())
+	{
+		return Call(in_uri, in_args, in_options, out_result, UserSettings->WaapiCallsTimeout, silenceLog);
+	}
+	return false;
+}
+
 bool FAkWaapiClient::Call(const char* in_uri, const TSharedRef<FJsonObject>& in_args, const TSharedRef<FJsonObject>& in_options,
-	TSharedPtr<FJsonObject>& out_result, int in_iTimeoutMs /*= 500*/, bool silenceLog /*= false*/)
+	TSharedPtr<FJsonObject>& out_result, int in_iTimeoutMs, bool silenceLog)
 {
 	bool eResult = false;
 #if AK_SUPPORT_WAAPI
@@ -870,6 +885,16 @@ bool FAkWaapiClient::Call(const char* in_uri, const TSharedRef<FJsonObject>& in_
 	}
 #endif
 	return eResult;
+}
+
+bool FAkWaapiClient::Call(const char* in_uri, const TSharedRef<FJsonObject>& in_args,
+	const TSharedRef<FJsonObject>& in_options, TSharedPtr<FJsonObject>& out_result, bool silenceLog /*= false*/)
+{
+	if (auto UserSettings = GetDefault<UAkSettingsPerUser>())
+	{
+		return Call(in_uri, in_args, in_options, out_result, UserSettings->WaapiCallsTimeout, silenceLog);
+	}
+	return false;
 }
 
 bool FAkWaapiClient::Call(const char* inUri, const TArray<KeyValueArgs>& Values,
@@ -1108,7 +1133,7 @@ bool FAkWaapiClient::WAAPIGet(WAAPIGetFromOption inFromField,
 
 	if (g_AkWaapiClient != nullptr && g_AkWaapiClient->IsConnected())
 	{
-		if (g_AkWaapiClient->Call(ak::wwise::core::object::get, getArgsJson, returnOptionsJson, outJsonResult, 500, in_bSilenceLog))
+		if (g_AkWaapiClient->Call(ak::wwise::core::object::get, getArgsJson, returnOptionsJson, outJsonResult, in_bSilenceLog))
 			return true;
 		else if (!in_bSilenceLog)
 			UE_LOG(LogAkAudio, Log, TEXT("Call to ak.wwise.core.object.get Failed"));

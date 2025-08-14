@@ -12,15 +12,17 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/WwiseFileHandlerModuleImpl.h"
+
 #include "Wwise/WwiseSoundBankManagerImpl.h"
 #include "Wwise/WwiseExternalSourceManagerImpl.h"
 #include "Wwise/WwiseFileCache.h"
 #include "Wwise/WwiseMediaManagerImpl.h"
 #include "Wwise/WwiseIOHookImpl.h"
+#include "Wwise/API/WwiseSoundEngineAPI.h"
 #include "Wwise/Stats/FileHandler.h"
 
 IMPLEMENT_MODULE(FWwiseFileHandlerModule, WwiseFileHandler)
@@ -29,10 +31,15 @@ FWwiseFileHandlerModule::FWwiseFileHandlerModule()
 {
 }
 
-IWwiseSoundBankManager* FWwiseFileHandlerModule::GetSoundBankManager()
+IWwiseSoundBankManagerPtr FWwiseFileHandlerModule::GetSoundBankManager()
 {
+	if (LIKELY(!IsEngineExitRequested()) && LIKELY(SoundBankManager))
+	{
+		return SoundBankManager;
+	}
+
 	Lock.ReadLock();
-	if (LIKELY(SoundBankManager))
+	if (SoundBankManager)
 	{
 		Lock.ReadUnlock();
 	}
@@ -42,18 +49,23 @@ IWwiseSoundBankManager* FWwiseFileHandlerModule::GetSoundBankManager()
 		Lock.WriteLock();
 		if (LIKELY(!SoundBankManager))
 		{
-			UE_LOG(LogWwiseFileHandler, Display, TEXT("Initializing default SoundBank Manager."));
-			SoundBankManager.Reset(InstantiateSoundBankManager());
+			SoundBankManager.Reset();
+			SoundBankManager = InstantiateSoundBankManager();
 		}
 		Lock.WriteUnlock();
 	}
-	return SoundBankManager.Get();
+	return SoundBankManager;
 }
 
-IWwiseExternalSourceManager* FWwiseFileHandlerModule::GetExternalSourceManager()
+IWwiseExternalSourceManagerPtr FWwiseFileHandlerModule::GetExternalSourceManager()
 {
+	if (LIKELY(!IsEngineExitRequested()) && LIKELY(ExternalSourceManager))
+	{
+		return ExternalSourceManager;
+	}
+
 	Lock.ReadLock();
-	if (LIKELY(ExternalSourceManager))
+	if (ExternalSourceManager)
 	{
 		Lock.ReadUnlock();
 	}
@@ -63,18 +75,23 @@ IWwiseExternalSourceManager* FWwiseFileHandlerModule::GetExternalSourceManager()
 		Lock.WriteLock();
 		if (LIKELY(!ExternalSourceManager))
 		{
-			UE_LOG(LogWwiseFileHandler, Display, TEXT("Initializing default External Source Manager."));
-			ExternalSourceManager.Reset(InstantiateExternalSourceManager());
+			ExternalSourceManager.Reset();
+			ExternalSourceManager = InstantiateExternalSourceManager();
 		}
 		Lock.WriteUnlock();
 	}
-	return ExternalSourceManager.Get();
+	return ExternalSourceManager;
 }
 
-IWwiseMediaManager* FWwiseFileHandlerModule::GetMediaManager()
+IWwiseMediaManagerPtr FWwiseFileHandlerModule::GetMediaManager()
 {
+	if (LIKELY(!IsEngineExitRequested()) && LIKELY(MediaManager))
+	{
+		return MediaManager;
+	}
+
 	Lock.ReadLock();
-	if (LIKELY(MediaManager))
+	if (MediaManager)
 	{
 		Lock.ReadUnlock();
 	}
@@ -84,18 +101,23 @@ IWwiseMediaManager* FWwiseFileHandlerModule::GetMediaManager()
 		Lock.WriteLock();
 		if (LIKELY(!MediaManager))
 		{
-			UE_LOG(LogWwiseFileHandler, Display, TEXT("Initializing default Media Manager."));
-			MediaManager.Reset(InstantiateMediaManager());
+			MediaManager.Reset();
+			MediaManager = InstantiateMediaManager();
 		}
 		Lock.WriteUnlock();
 	}
-	return MediaManager.Get();
+	return MediaManager;
 }
 
 FWwiseFileCache* FWwiseFileHandlerModule::GetFileCache()
 {
+	if (LIKELY(!IsEngineExitRequested()) && LIKELY(FileCache))
+	{
+		return FileCache.Get();
+	}
+
 	Lock.ReadLock();
-	if (LIKELY(FileCache))
+	if (FileCache)
 	{
 		Lock.ReadUnlock();
 	}
@@ -105,7 +127,6 @@ FWwiseFileCache* FWwiseFileHandlerModule::GetFileCache()
 		Lock.WriteLock();
 		if (LIKELY(!FileCache))
 		{
-			UE_LOG(LogWwiseFileHandler, Display, TEXT("Initializing default File Cache."));
 			FileCache.Reset(InstantiateFileCache());
 		}
 		Lock.WriteUnlock();
@@ -113,29 +134,67 @@ FWwiseFileCache* FWwiseFileHandlerModule::GetFileCache()
 	return FileCache.Get();
 }
 
+FWwiseExecutionQueue* FWwiseFileHandlerModule::GetBankExecutionQueue()
+{
+	if (LIKELY(!IsEngineExitRequested()) && LIKELY(BankExecutionQueue))
+	{
+		return BankExecutionQueue.Get();
+	}
+
+	Lock.ReadLock();
+	if (BankExecutionQueue)
+	{
+		Lock.ReadUnlock();
+	}
+	else
+	{
+		Lock.ReadUnlock();
+		Lock.WriteLock();
+		if (LIKELY(!BankExecutionQueue))
+		{
+			if (!IsEngineExitRequested())
+			{
+				BankExecutionQueue.Reset(InstantiateBankExecutionQueue());
+			}
+		}
+		Lock.WriteUnlock();
+	}
+	return BankExecutionQueue.Get();
+}
+
 FWwiseIOHook* FWwiseFileHandlerModule::InstantiateIOHook()
 {
 	return new FWwiseIOHookImpl;
 }
 
-IWwiseSoundBankManager* FWwiseFileHandlerModule::InstantiateSoundBankManager()
+IWwiseSoundBankManagerPtr FWwiseFileHandlerModule::InstantiateSoundBankManager()
 {
-	return new FWwiseSoundBankManagerImpl;
+	UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Initializing default SoundBank Manager."));
+	return MakeShared<FWwiseSoundBankManagerImpl>();
 }
 
-IWwiseExternalSourceManager* FWwiseFileHandlerModule::InstantiateExternalSourceManager()
+IWwiseExternalSourceManagerPtr FWwiseFileHandlerModule::InstantiateExternalSourceManager()
 {
-	return new FWwiseExternalSourceManagerImpl;
+	UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Initializing default External Source Manager."));
+	return MakeShared<FWwiseExternalSourceManagerImpl>();
 }
 
-IWwiseMediaManager* FWwiseFileHandlerModule::InstantiateMediaManager()
+IWwiseMediaManagerPtr FWwiseFileHandlerModule::InstantiateMediaManager()
 {
-	return new FWwiseMediaManagerImpl;
+	UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Initializing default Media Manager."));
+	return MakeShared<FWwiseMediaManagerImpl>();
 }
 
 FWwiseFileCache* FWwiseFileHandlerModule::InstantiateFileCache()
 {
+	UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Initializing default File Cache."));
 	return new FWwiseFileCache;
+}
+
+FWwiseExecutionQueue* FWwiseFileHandlerModule::InstantiateBankExecutionQueue()
+{
+	UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Initializing default Bank Execution Queue."));
+	return new FWwiseExecutionQueue(TEXT("BankExecutionQueue"), EWwiseTaskPriority::BackgroundNormal);
 }
 
 void FWwiseFileHandlerModule::StartupModule()
@@ -148,23 +207,28 @@ void FWwiseFileHandlerModule::ShutdownModule()
 	Lock.WriteLock();
 	if (SoundBankManager.IsValid())
 	{
-		UE_LOG(LogWwiseFileHandler, Display, TEXT("Shutting down SoundBank Manager."));
+		UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Shutting down SoundBank Manager."));
 		SoundBankManager.Reset();
 	}
 	if (ExternalSourceManager.IsValid())
 	{
-		UE_LOG(LogWwiseFileHandler, Display, TEXT("Shutting down External Source Manager."));
+		UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Shutting down External Source Manager."));
 		ExternalSourceManager.Reset();
 	}
 	if (MediaManager.IsValid())
 	{
-		UE_LOG(LogWwiseFileHandler, Display, TEXT("Shutting down Media Manager."));
+		UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Shutting down Media Manager."));
 		MediaManager.Reset();
 	}
 	if (FileCache.IsValid())
 	{
-		UE_LOG(LogWwiseFileHandler, Display, TEXT("Shutting down File Cache."));
+		UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Shutting down File Cache."));
 		FileCache.Reset();
+	}
+	if (BankExecutionQueue.IsValid())
+	{
+		UE_LOG(LogWwiseFileHandler, Verbose, TEXT("Shutting down Bank Execution Queue."));
+		BankExecutionQueue.Release()->CloseAndDelete();
 	}
 	Lock.WriteUnlock();
 	IWwiseFileHandlerModule::ShutdownModule();

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/WwiseReconcile.h"
@@ -37,7 +37,7 @@ bool IWwiseReconcile::ReconcileAssets(EWwiseReconcileOperationFlags OperationFla
 		return false;
 	}
 	//Locking the Project Database to prevent changes during reconcile.
-	FWwiseDataStructureScopeLock DataStructure(*ProjectDatabase);
+	WwiseDataStructureScopeLock DataStructure(*ProjectDatabase);
 
 	if(GuidToWwiseRef.Num() == 0)
 	{
@@ -103,6 +103,21 @@ bool IWwiseReconcile::ReconcileAssets(EWwiseReconcileOperationFlags OperationFla
 		else if(!ReconcileTask.ShouldCancel())
 		{
 			UE_LOG(LogWwiseReconcile, Warning, TEXT("No New AkAudioType assets created"));
+			bSucceeded = false;
+		}
+	}
+
+	if(AssetsToMove.Num() != 0)
+	{
+		int NumberOfAssetsMoved = MoveAssets(ReconcileTask);
+		NumberOfOperationsCompleted += NumberOfAssetsMoved;
+		if (NumberOfAssetsMoved > 0 && !ReconcileTask.ShouldCancel())
+		{
+			UE_LOG(LogWwiseReconcile, Display, TEXT("Moved %i assets out of %i."), NumberOfAssetsMoved, AssetsToMove.Num());
+		}
+		else if(!ReconcileTask.ShouldCancel())
+		{
+			UE_LOG(LogWwiseReconcile, Warning, TEXT("No assets moved"));
 			bSucceeded = false;
 		}
 	}

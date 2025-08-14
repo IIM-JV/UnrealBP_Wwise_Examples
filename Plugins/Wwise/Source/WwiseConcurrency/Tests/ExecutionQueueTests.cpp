@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/WwiseUnitTests.h"
@@ -67,7 +67,10 @@ WWISE_TEST_CASE(Concurrency_ExecutionQueue_Smoke, "Wwise::Concurrency::Execution
 			{
 				ExecutionQueue.AsyncWait(WWISE_TEST_ASYNC_NAME, [&Value, CurrentThreadId]
 				{
-					CHECK_FALSE(CurrentThreadId == FPlatformTLS::GetCurrentThreadId());
+					if (FPlatformProcess::SupportsMultithreading())
+					{
+						CHECK_FALSE(CurrentThreadId == FPlatformTLS::GetCurrentThreadId());
+					}
 					++Value;
 				});
 			}
@@ -99,7 +102,10 @@ WWISE_TEST_CASE(Concurrency_ExecutionQueue_Smoke, "Wwise::Concurrency::Execution
 		CHECK_FALSE(ExecutionQueue.IsRunningInThisThread());
 		ExecutionQueue.AsyncWait(WWISE_TEST_ASYNC_NAME, [&ExecutionQueue, CurrentThreadId]
 		{
-			CHECK_FALSE(CurrentThreadId == FPlatformTLS::GetCurrentThreadId());
+			if (FPlatformProcess::SupportsMultithreading())
+			{
+				CHECK_FALSE(CurrentThreadId == FPlatformTLS::GetCurrentThreadId());
+			}
 			CHECK(ExecutionQueue.IsRunningInThisThread());
 		});
 		CHECK_FALSE(ExecutionQueue.IsRunningInThisThread());
@@ -325,7 +331,10 @@ WWISE_TEST_CASE(Concurrency_ExecutionQueue, "Wwise::Concurrency::ExecutionQueue"
 			{
 				ExecutionQueue.Async(WWISE_TEST_ASYNC_NAME, [&Value, ShouldBe = i, CurrentThreadId]
 				{
-					CHECK(CurrentThreadId == FPlatformTLS::GetCurrentThreadId());
+					if (FPlatformProcess::SupportsMultithreading())
+					{
+						CHECK(CurrentThreadId == FPlatformTLS::GetCurrentThreadId());
+					}
 					CHECK(Value++ == ShouldBe);
 				});
 			}

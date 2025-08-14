@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 /*------------------------------------------------------------------------------------
@@ -33,6 +33,7 @@ Statics and Globals
 const FString WwiseWaapiHelper::ACTION                       = TEXT("action");
 const FString WwiseWaapiHelper::ANCESTORS                    = TEXT("ancestors"); 
 const FString WwiseWaapiHelper::AT                           = TEXT("@");
+const FString WwiseWaapiHelper::AUDIO_DEVICE				 = TEXT("audiodevice");
 const FString WwiseWaapiHelper::AUX_BUSSES                   = TEXT("auxBusses");
 const FString WwiseWaapiHelper::BACK_SLASH                   = TEXT("\\");
 const FString WwiseWaapiHelper::BANK_DATA                    = TEXT("bankData");
@@ -152,7 +153,9 @@ bool SubscribeToPropertyStateChange(const FString& ItemID, const FString& ItemPr
 {
 	auto* waapiClient = FAkWaapiClient::Get();
 	if (!waapiClient)
+	{
 		return false;
+	}
 
 #if AK_SUPPORT_WAAPI
 	TSharedRef<FJsonObject> options = MakeShareable(new FJsonObject());
@@ -160,8 +163,9 @@ bool SubscribeToPropertyStateChange(const FString& ItemID, const FString& ItemPr
 	options->SetStringField(WwiseWaapiHelper::PROPERTY, ItemProperty);
 
 	return waapiClient->Subscribe(ak::wwise::core::object::propertyChanged, options, CallBack, SubscriptionId, outJsonResult);
-#endif
+#else
 	return false;
+#endif
 }
 
 #undef LOCTEXT_NAMESPACE

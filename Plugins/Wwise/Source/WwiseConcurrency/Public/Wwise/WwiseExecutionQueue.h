@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -37,6 +37,7 @@ struct WWISECONCURRENCY_API FWwiseExecutionQueue
 	const TCHAR* const DebugName;
 	const EWwiseTaskPriority TaskPriority;
 	using FBasicFunction = TUniqueFunction<void()>;
+	using FSharedFunction = TFunction<void()>;
 
 #define WWISE_EQ_NAME(name) TEXT(name) TEXT(" Execution Queue worker") 
 
@@ -75,7 +76,7 @@ struct WWISECONCURRENCY_API FWwiseExecutionQueue
 	 *
 	 * Execute the function asynchronously, or on the Task Graph, but never synchronously.
 	*/
-	void AsyncAlways(const TCHAR* InDebugName, FBasicFunction&& InFunction);
+	void AsyncAlways(const TCHAR* InDebugName, FSharedFunction&& InFunction);
 
 	/**
 	 * @brief Calls a function asynchronously in the Execution Queue, and then wait for it to be called.

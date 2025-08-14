@@ -12,13 +12,14 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "WwiseBrowser/WwiseBrowserHelpers.h"
 
 #include "WwiseUEFeatures.h"
 #include "AkAcousticTexture.h"
+#include "AkAudioDeviceShareSet.h"
 #include "AkAudioEvent.h"
 #include "AkAuxBus.h"
 #include "AkRtpc.h"
@@ -52,6 +53,10 @@ EWwiseItemType::Type WwiseBrowserHelpers::GetTypeFromClass(UClass* Class)
 	if (Class == UAkAcousticTexture::StaticClass())
 	{
 		return EWwiseItemType::AcousticTexture;
+	}
+	if (Class == UAkAudioDeviceShareSet::StaticClass())
+	{
+		return EWwiseItemType::AudioDeviceShareSet;
 	}
 	if (Class == UAkRtpc::StaticClass())
 	{
@@ -106,6 +111,11 @@ void WwiseBrowserHelpers::FindOrCreateAssetsRecursive(const FWwiseTreeItemPtr& W
 	{
 		Name = WwiseTreeItem->DisplayName;
 		WwiseAssetClass = UAkAcousticTexture::StaticClass();
+	}
+	else if (WwiseTreeItem->ItemType == EWwiseItemType::AudioDeviceShareSet)
+	{
+		Name = WwiseTreeItem->DisplayName;
+		WwiseAssetClass = UAkAudioDeviceShareSet::StaticClass();
 	}
 	else if (WwiseTreeItem->ItemType == EWwiseItemType::AuxBus)
 	{
@@ -189,20 +199,12 @@ FAssetData WwiseBrowserHelpers::CreateBrowserAsset(const FString& AssetName, con
 		if (AssetCreationMode == EAssetCreationMode::Transient || WwiseTreeItem->IsFolder())
 		{
 			FString AssetPackage = UPackageTools::SanitizePackageName(GetTransientPackage()->GetPathName() / AssetClass->GetName());
-#if UE_5_1_OR_LATER
 			return FAssetData(FName(AssetPackage), FName(GetTransientPackage()->GetPathName()), FName(*SanitizedName), AssetClass->GetClassPathName());
-#else
-			return FAssetData(FName(AssetPackage), FName(GetTransientPackage()->GetPathName()), FName(*SanitizedName), AssetClass->GetFName());
-#endif
 		}
 		else if (AssetCreationMode == EAssetCreationMode::InPackage)
 		{
 			FString AssetPackage = UPackageTools::SanitizePackageName(PackagePath / AssetName);
-#if UE_5_1_OR_LATER
 			return FAssetData(FName(AssetPackage), FName(PackagePath), FName(*SanitizedName), AssetClass->GetClassPathName());
-#else
-			return FAssetData(FName(AssetPackage), FName(PackagePath), FName(*SanitizedName), AssetClass->GetFName());
-#endif
 		}
 	}
 	return CreateBrowserAssetTask(AssetName, WwiseTreeItem, AssetClass, AssetCreationMode, PackagePath);
@@ -248,7 +250,7 @@ FAssetData WwiseBrowserHelpers::CreateAssetInPackage(const FString& AssetName, c
 FAssetData WwiseBrowserHelpers::CreateAsset(const FString& AssetName, const FWwiseTreeItemPtr& WwiseTreeItem, UClass* AssetClass, UPackage* Pkg)
 {
 	// Verify the asset class
-	if (!ensureMsgf(AssetClass, TEXT("The new asset '%s' wasn't created due to a problem finding the appropriate class for the new asset.")))
+	if (!ensureMsgf(AssetClass, TEXT("The new asset '%s' wasn't created due to a problem finding the appropriate class for the new asset."), *AssetName))
 	{
 		return nullptr;
 	}
@@ -404,6 +406,9 @@ UAkAssetFactory* WwiseBrowserHelpers::GetAssetFactory(const FWwiseTreeItemPtr& W
 	case EWwiseItemType::AcousticTexture:
 		Factory = UAkAcousticTextureFactory::StaticClass()->GetDefaultObject<UFactory>();
 		break;
+	case EWwiseItemType::AudioDeviceShareSet:
+		Factory = UAkAudioDeviceShareSetFactory::StaticClass()->GetDefaultObject<UFactory>();
+		break;
 	case EWwiseItemType::AuxBus:
 		Factory = UAkAuxBusFactory::StaticClass()->GetDefaultObject<UFactory>();
 		break;
@@ -444,7 +449,6 @@ bool WwiseBrowserHelpers::CanCreateAsset(const FWwiseTreeItemPtr& Item)
 
 FLinearColor WwiseBrowserHelpers::GetTextColor(bool bUpToDate)
 {
-	FColor Color;
 	return bUpToDate ? FLinearColor::Gray : FLinearColor(1.f, 0.33f, 0);
 }
 

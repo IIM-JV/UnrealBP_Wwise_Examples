@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -20,7 +20,7 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "Engine/EngineTypes.h"
 #include "AkInclude.h"
 #include "InitializationSettings/AkInitializationSettings.h"
-#include "InitializationSettings/AkPlatformInitialisationSettingsBase.h"
+#include "InitializationSettings/AkPlatformInitializationSettingsBase.h"
 
 #include "AkAndroidInitializationSettings.generated.h"
 
@@ -42,15 +42,18 @@ struct FAkAndroidAdvancedInitializationSettings : public FAkAdvancedInitializati
 	UPROPERTY(EditAnywhere, Category = "Ak Initialization Settings", meta = (ToolTip = "Used when hardware-preferred frame size and user-preferred frame size are not compatible. If true (default), the sound engine will initialize to a multiple of the HW setting, close to the user setting. If false, the user setting is used as is, regardless of the HW preference (might incur a performance hit)."))
 	bool RoundFrameSizeToHardwareSize = true;
 
-	UPROPERTY(EditAnywhere, Category = "Ak Initialization Settings", meta = (ToolTip = "Use the lowest output latency possible for the current hardware. If true (default), the output audio device will be initialized in low-latency operation, allowing for more responsive audio playback on most devices. However, when operating in low-latency mode, some devices may have differences in audio reproduction. If false, the output audio device will be initialized without low-latency operation."))
-	bool UseLowLatencyMode = true;	
+	UPROPERTY(EditAnywhere, Category = "Ak Initialization Settings", meta = (ToolTip = "Use the lowest output latency possible for the current hardware. If true (default), the output audio device will be initialized in low-latency operation, allowing for more responsive audio playback on most devices. However, when operating in low-latency mode, some devices may have differences in audio reproduction. If false, the output audio device will be initialized without low-latency operation.", MinWwiseVersion="2023.1"))
+	bool UseLowLatencyMode = true;
+
+	UPROPERTY(EditAnywhere, Category = "Ak Initialization Settings", meta = (ToolTip = "Enable this to inspect sink behavior. Useful for debugging non-standard Android devices."))
+	bool bVerboseSink = false;
 
 	void FillInitializationStructure(FAkInitializationStructure& InitializationStructure) const;
 };
 
 
 UCLASS(config = Game, defaultconfig)
-class AKAUDIO_API UAkAndroidInitializationSettings : public UObject, public IAkPlatformInitialisationSettingsBase
+class AKAUDIO_API UAkAndroidInitializationSettings : public UAkPlatformInitializationSettingsBase
 {
 	GENERATED_BODY()
 

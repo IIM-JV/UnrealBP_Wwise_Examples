@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -22,11 +22,25 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "UObject/Object.h"
 #include "Wwise/Info/WwiseObjectInfo.h"
 #include "Wwise/WwiseResourceLoaderFuture.h"
+#include "WwiseUnrealDefines.h"
+#if WITH_EDITORONLY_DATA && UE_5_5_OR_LATER
+#include "Cooker/CookDependency.h"
+#include "Serialization/CompactBinary.h"
+#endif
+#if UE_5_4_OR_LATER
+#include "UObject/AssetRegistryTagsContext.h"
+#endif
 
 #include "AkAudioType.generated.h"
 
 class FWwiseProjectDatabase;
-class FWwiseAnyRef;
+class WwiseAnyRef;
+
+/**
+ * Wwise Audio Type abstract Unreal base class.
+ *
+ * All Unreal assets derive from this type.
+ */
 UCLASS(Abstract)
 class AKAUDIO_API UAkAudioType : public UObject
 {
@@ -35,11 +49,11 @@ class AKAUDIO_API UAkAudioType : public UObject
 public:
 	virtual ~UAkAudioType() override;
 
-	///< When true, SoundBanks and medias associated with this asset will be loaded in the Wwise SoundEngine when Unreal loads this asset.
+	/// Automatically load SoundBanks and associated media associated when Unreal loads this asset.
 	UPROPERTY(EditAnywhere, Category = "AkAudioType|Behaviour")
 	bool bAutoLoad = true;
 
-// Deprecated ID properties used in migration
+	// Deprecated ID properties used in migration
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(meta=(Deprecated))
 	FGuid ID_DEPRECATED;
@@ -49,7 +63,7 @@ public:
 #endif
 	
 	UPROPERTY(EditAnywhere, Category = "AkAudioType")
-	TArray<UObject*> UserData;
+	TArray<TObjectPtr<UObject>> UserData;
 
 public:
 	void Serialize(FArchive& Ar) override;
@@ -98,13 +112,14 @@ public:
 	virtual void BeginCacheForCookedPlatformData(const ITargetPlatform* TargetPlatform) override;
 
 	// Checks whether the metadata for this UAkAudioType matches what is in the Project Database
-	virtual bool IsAssetOutOfDate(const FWwiseAnyRef& CurrentWwiseRef);
-	virtual void FillInfo(const FWwiseAnyRef& CurrentWwiseRef);
+	virtual bool IsAssetOutOfDate(const WwiseAnyRef& CurrentWwiseRef);
+	virtual void FillInfo(const WwiseAnyRef& CurrentWwiseRef);
 	virtual void FillInfo() {}
 	virtual void FillMetadata(FWwiseProjectDatabase* ProjectDatabase) {}
 	virtual void CheckWwiseObjectInfo();
 	virtual void MigrateWwiseObjectInfo();
 	void WaitForResourceUnloaded();
+	virtual void EnsureResourceCookerCreated(const ITargetPlatform* TargetPlatform);
 
 	template <class InfoType>
 	InfoType GetValidatedInfo(const InfoType& InInfo)
@@ -118,7 +133,15 @@ public:
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#if UE_5_4_OR_LATER 
+	virtual void GetAssetRegistryTags(FAssetRegistryTagsContext Context) const override;
+#else
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+#endif // UE_5_4_OR_LATER
+#endif // WITH_EDITOR
+
+#if WITH_EDITORONLY_DATA && UE_5_5_OR_LATER
+	static void HashDependenciesForCook(FCbFieldViewIterator Args, UE::Cook::FCookDependencyContext& Context);
 #endif
 
 protected:

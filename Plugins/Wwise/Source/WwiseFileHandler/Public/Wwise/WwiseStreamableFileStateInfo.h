@@ -12,12 +12,11 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 
-#include "Wwise/WwiseFileStateTools.h"
 #include "Wwise/Stats/FileHandler.h"
 
 #include "AkInclude.h"
@@ -42,21 +41,10 @@ public:
 	}
 
 	virtual ~FWwiseStreamableFileStateInfo() {}
-	virtual bool CanProcessFileOp() const
-	{
-		UE_LOG(LogWwiseFileHandler, Error, TEXT("Cannot process read on a non-streaming asset"));
-		return false;
-	}
-	virtual AKRESULT ProcessRead(AkFileDesc& InFileDesc, const AkIoHeuristics& InHeuristics, AkAsyncIOTransferInfo& OutTransferInfo, FWwiseAkFileOperationDone&& InFileOpDoneCallback)
-	{
-		UE_LOG(LogWwiseFileHandler, Error, TEXT("Cannot process read on a non-streaming asset"));
-		return AK_Fail;
-	}
-	virtual AKRESULT ProcessWrite(AkFileDesc& InFileDesc, const AkIoHeuristics& InHeuristics, AkAsyncIOTransferInfo& OutTransferInfo, FWwiseAkFileOperationDone&& InFileOpDoneCallback)
-	{
-		UE_LOG(LogWwiseFileHandler, Error, TEXT("Cannot process write on a non-writable asset"));
-		return AK_Fail;
-	}
+	virtual bool CanProcessFileOp() const;
+	virtual AKRESULT ProcessRead(AkFileDesc& InFileDesc, const AkIoHeuristics& InHeuristics, AkAsyncIOTransferInfo& OutTransferInfo, FWwiseAkFileOperationDone&& InFileOpDoneCallback);
+	virtual AKRESULT ProcessWrite(AkFileDesc& InFileDesc, const AkIoHeuristics& InHeuristics, AkAsyncIOTransferInfo& OutTransferInfo, FWwiseAkFileOperationDone&& InFileOpDoneCallback);
+	
 	virtual void CloseStreaming() {}	
 	
 protected:

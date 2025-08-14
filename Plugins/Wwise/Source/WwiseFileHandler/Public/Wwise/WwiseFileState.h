@@ -12,13 +12,12 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 
 #include "Wwise/WwiseExecutionQueue.h"
-#include "Wwise/WwiseFileStateTools.h"
 #include <atomic>
 
 class FWwiseAsyncCycleCounter;
@@ -30,10 +29,10 @@ enum class WWISEFILEHANDLER_API EWwiseFileStateOperationOrigin
 	Streaming
 };
 
-class WWISEFILEHANDLER_API FWwiseFileState : protected FWwiseFileStateTools
+class WWISEFILEHANDLER_API FWwiseFileState
 {
 public:
-	~FWwiseFileState() override;
+	virtual ~FWwiseFileState();
 
 	template <typename RequestedType>
 	RequestedType* GetStateAs()
@@ -49,6 +48,17 @@ public:
 
 	/// A serial queue of operations being processed for this state
 	FWwiseExecutionQueue* FileStateExecutionQueue{ new FWwiseExecutionQueue(WWISE_EQ_NAME("FWwiseFileState")) };
+
+	/**
+	 * Retrieves a serial queue for Wwise Bank operation.
+	 *
+	 * Wwise Bank manager works in a Single Locked Producer queue mode. Calls to Bank and Media operations in more than one thread
+	 * will block threads so they're effectively called one after the other. Providing operations sequentially will help improve
+	 * performance.
+
+	 * @return the Bank Execution Queue, or nullptr if the module is not loaded. 
+	 */
+	static FWwiseExecutionQueue* GetBankExecutionQueue();
 
 	using FBasicFunction = FWwiseExecutionQueue::FBasicFunction;
 	using FOpQueueItem = FWwiseExecutionQueue::FOpQueueItem; 

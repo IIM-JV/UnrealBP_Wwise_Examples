@@ -12,40 +12,18 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "ReconcileOperationColumn.h"
 
 #include "AkAudioStyle.h"
 #include "Widgets/SWidget.h"
-#include "WaapiPicker/WwiseTreeItem.h"
+#include "Wwise/WwiseTreeItem.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Wwise/WwiseReconcile.h"
 
 #define LOCTEXT_NAMESPACE "AkAudio"
-
-FText FReconcileOperationColumn::GetOperationText(FWwiseReconcileItem TreeItem)
-{
-	
-	if (EnumHasAllFlags(TreeItem.OperationRequired, 
-		EWwiseReconcileOperationFlags::UpdateExisting | EWwiseReconcileOperationFlags::RenameExisting))
-	{
-		return LOCTEXT("WwiseReconcileUpdateRename", "Update and Rename");
-	}
-	switch (TreeItem.OperationRequired)
-	{
-	case EWwiseReconcileOperationFlags::Create:
-		return LOCTEXT("WwiseReconcileCreate", "Create");
-	case EWwiseReconcileOperationFlags::UpdateExisting:
-		return LOCTEXT("WwiseReconcileUpdate", "Update");
-	case EWwiseReconcileOperationFlags::RenameExisting:
-		return LOCTEXT("WwiseReconcileRename", "Rename");
-	case EWwiseReconcileOperationFlags::Delete:
-		return LOCTEXT("WwiseReconcileDelete", "Delete");
-	}
-	return LOCTEXT("WwiseReconcileEmpty", "");
-}
 
 FName FReconcileOperationColumn::GetColumnId()
 {
@@ -61,7 +39,7 @@ const TSharedRef<SWidget> FReconcileOperationColumn::ConstructRowWidget(FWwiseRe
 		.VAlign(VAlign_Center)
 		[
 			SNew(STextBlock)
-			.Text(GetOperationText(TreeItem))
+			.Text(TreeItem.GetOperationText())
 		];
 }
 

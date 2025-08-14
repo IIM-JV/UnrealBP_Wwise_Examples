@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -43,7 +43,6 @@ Super(ObjectInitializer)
 
 	RootComponent = AkComponent;
 
-	AkComponent->AttenuationScalingFactor = 1.f;
 
 	//bNoDelete = true;
 	SetHidden(true);
@@ -106,12 +105,6 @@ void AAkAmbientSound::StartPlaying()
 {
 	if( !IsCurrentlyPlaying() )
 	{
-		FAkAudioDevice* AkAudioDevice = FAkAudioDevice::Get();
-		if (AkAudioDevice)
-		{
-			AkAudioDevice->SetAttenuationScalingFactor(this, AkComponent->AttenuationScalingFactor);
-		}
-		
 		if (AkComponent->AkAudioEvent)
 		{
 			AkComponent->AkAudioEvent->PostOnActor(this, nullptr, nullptr, nullptr, (AkCallbackType)0, nullptr, StopWhenOwnerIsDestroyed);

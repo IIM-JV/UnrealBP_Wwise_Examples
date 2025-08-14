@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -21,9 +21,11 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "Logging/LogMacros.h"
 
 #include "Wwise/Stats/NamedEvents.h"
+#include "Wwise/Stats/Memory.h"
 
 DECLARE_STATS_GROUP(TEXT("Resource Loader"), STATGROUP_WwiseResourceLoader, STATCAT_Wwise);
 
+DECLARE_DWORD_ACCUMULATOR_STAT_EXTERN(TEXT("Referenced Asset Libraries"), STAT_WwiseResourceLoaderAssetLibraries, STATGROUP_WwiseResourceLoader, WWISERESOURCELOADER_API);
 DECLARE_DWORD_ACCUMULATOR_STAT_EXTERN(TEXT("Referenced Aux Busses"), STAT_WwiseResourceLoaderAuxBusses, STATGROUP_WwiseResourceLoader, WWISERESOURCELOADER_API);
 DECLARE_DWORD_ACCUMULATOR_STAT_EXTERN(TEXT("Referenced Events"), STAT_WwiseResourceLoaderEvents, STATGROUP_WwiseResourceLoader, WWISERESOURCELOADER_API);
 DECLARE_DWORD_ACCUMULATOR_STAT_EXTERN(TEXT("Referenced External Sources"), STAT_WwiseResourceLoaderExternalSources, STATGROUP_WwiseResourceLoader, WWISERESOURCELOADER_API);
@@ -48,3 +50,12 @@ WWISERESOURCELOADER_API DECLARE_LOG_CATEGORY_EXTERN(LogWwiseResourceLoader, Log,
 #define SCOPED_WWISERESOURCELOADER_EVENT_F_4(Format, ...) SCOPED_WWISE_NAMED_EVENT_F_4(TEXT("WwiseResourceLoader"), Format, __VA_ARGS__)
 
 #define WWISERESOURCELOADER_ASYNC_NAME(Text) TEXT("WwiseResourceLoader ") TEXT(Text)
+
+LLM_DECLARE_TAG_API(Audio_Wwise_ResourceLoader_AuxBusses, WWISERESOURCELOADER_API);
+LLM_DECLARE_TAG_API(Audio_Wwise_ResourceLoader_Events, WWISERESOURCELOADER_API);
+LLM_DECLARE_TAG_API(Audio_Wwise_ResourceLoader_ExternalSources, WWISERESOURCELOADER_API);
+LLM_DECLARE_TAG_API(Audio_Wwise_ResourceLoader_GroupValues, WWISERESOURCELOADER_API);
+LLM_DECLARE_TAG_API(Audio_Wwise_ResourceLoader_InitBanks, WWISERESOURCELOADER_API);
+LLM_DECLARE_TAG_API(Audio_Wwise_ResourceLoader_Media, WWISERESOURCELOADER_API);
+LLM_DECLARE_TAG_API(Audio_Wwise_ResourceLoader_ShareSets, WWISERESOURCELOADER_API);
+LLM_DECLARE_TAG_API(Audio_Wwise_ResourceLoader_SoundBanks, WWISERESOURCELOADER_API);

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -57,7 +57,7 @@ UAkPortalComponent::UAkPortalComponent(const class FObjectInitializer& ObjectIni
 	ObstructionRefreshInterval = 0.f;
 
 	PortalState = InitialState;
-	PortalNeedsUpdate = true;
+	bPortalNeedsUpdate = true;
 
 	PortalOcclusion = InitialOcclusion;
 	PortalOcclusionChanged = true;
@@ -122,9 +122,11 @@ void UAkPortalComponent::OnRegister()
 
 	SetRelativeTransform(FTransform::Identity);
 	InitializeParent();
+	// Force update the room or outdoors room connections
 	UpdateConnectedRooms(true);
-
-	PortalNeedsUpdate = true;
+	// Add portal to the WorldPortalsMap before tick.
+	// If the portal is created before the room, this will allow the room to update the portal afterwards
+	SetSpatialAudioPortal();
 
 #if WITH_EDITOR
 	if (GetDefault<UAkSettingsPerUser>()->VisualizeRoomsAndPortals)
@@ -136,7 +138,6 @@ void UAkPortalComponent::OnRegister()
 
 void UAkPortalComponent::OnUnregister()
 {
-	Super::OnUnregister();
 #if WITH_EDITOR
 	if (!HasAnyFlags(RF_Transient))
 	{
@@ -149,6 +150,7 @@ void UAkPortalComponent::OnUnregister()
 		RemovePortalConnections();
 		Dev->RemoveSpatialAudioPortal(this);
 	}
+	Super::OnUnregister();
 }
 
 #if WITH_EDITOR
@@ -169,7 +171,7 @@ void UAkPortalComponent::HandleObjectsReplaced(const TMap<UObject*, UObject*>& R
 	}
 	if (ReplacementMap.Contains(FrontRoom.Get()) || ReplacementMap.Contains(BackRoom.Get()))
 	{
-		PortalRoomsNeedUpdate = true;
+		bPortalRoomsNeedUpdate = true;
 	}
 }
 
@@ -197,6 +199,7 @@ void UAkPortalComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
 	AkSettingsPerUser->OnShowRoomsPortalsChanged.Remove(ShowPortalsChangedHandle);
 	ShowPortalsChangedHandle.Reset();
 	DestroyDrawComponent();
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
 }
 #endif // WITH_EDITOR
 
@@ -216,8 +219,9 @@ bool UAkPortalComponent::MoveComponentImpl(
 
 void UAkPortalComponent::OnUpdateTransform(EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport)
 {
-	PortalRoomsNeedUpdate = true;
-	PortalNeedsUpdate = true;
+	Super::OnUpdateTransform(UpdateTransformFlags, Teleport);
+	bPortalRoomsNeedUpdate = true;
+	bPortalNeedsUpdate = true;
 }
 
 
@@ -264,6 +268,7 @@ void UAkPortalComponent::DestroyDrawComponent()
 {
 	if (DrawPortalComponent != nullptr)
 	{
+		DrawPortalComponent->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, /*bCallModify=*/ false));
 		DrawPortalComponent->DestroyComponent();
 		DrawPortalComponent = nullptr;
 	}
@@ -279,12 +284,15 @@ void UAkPortalComponent::InitializeParent()
 		if (!Parent.IsValid())
 		{
 			AkComponentHelpers::LogAttachmentError(this, SceneParent, "UPrimitiveComponent");
-		}
+		}	
 #if WITH_EDITOR
-		DestroyTextVisualizers();
-		InitTextVisualizers();
-		UpdateRoomNames();
-		UpdateTextLocRotVis();
+		if (!IsRunningCommandlet())
+		{
+			DestroyTextVisualizers();
+			InitTextVisualizers();
+			UpdateRoomNames();
+			UpdateTextLocRotVis();
+		}
 #endif
 	}
 }
@@ -295,7 +303,7 @@ void UAkPortalComponent::SetSpatialAudioPortal()
 	if (AkAudioDevice != nullptr)
 	{
 		AkAudioDevice->SetSpatialAudioPortal(this);
-		PortalNeedsUpdate = false;
+		bPortalNeedsUpdate = false;
 	}
 }
 
@@ -304,7 +312,7 @@ void UAkPortalComponent::EnablePortal()
 	if (PortalState == AkAcousticPortalState::Closed)
 	{
 		PortalState = AkAcousticPortalState::Open;
-		PortalNeedsUpdate = true;
+		bPortalNeedsUpdate = true;
 	}
 }
 
@@ -313,7 +321,7 @@ void UAkPortalComponent::DisablePortal()
 	if (PortalState == AkAcousticPortalState::Open)
 	{
 		PortalState = AkAcousticPortalState::Closed;
-		PortalNeedsUpdate = true;
+		bPortalNeedsUpdate = true;
 	}
 }
 
@@ -348,6 +356,17 @@ void UAkPortalComponent::SetPortalOcclusion(float InPortalOcclusion)
 	}
 }
 
+const TWeakObjectPtr<UAkRoomComponent> UAkPortalComponent::GetOppositeRoomComponent(const UAkRoomComponent* pRoomComponent) const
+{
+	if (FrontRoom.Get() == pRoomComponent)
+		return BackRoom;
+
+	if (BackRoom.Get() == pRoomComponent)
+		return FrontRoom;
+
+	return nullptr;
+}
+
 void UAkPortalComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -360,17 +379,18 @@ void UAkPortalComponent::BeginPlay()
 	ObstructionServiceFrontRoom.Init(portalID, World, ObstructionRefreshInterval);
 	ObstructionServiceBackRoom.Init(portalID, World, ObstructionRefreshInterval);
 
-	PortalRoomsNeedUpdate = true;
+	bPortalRoomsNeedUpdate = true;
 }
 
 void UAkPortalComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction * ThisTickFunction)
 {
-	if (PortalRoomsNeedUpdate)
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (bPortalRoomsNeedUpdate)
 	{
 		UpdateConnectedRooms();
 	}
 
-	if (PortalNeedsUpdate)
+	if (bPortalNeedsUpdate)
 	{
 		SetSpatialAudioPortal();
 	}
@@ -432,7 +452,7 @@ void UAkPortalComponent::TickComponent(float DeltaTime, enum ELevelTick TickType
 void UAkPortalComponent::ResetPortalState()
 {
 	PortalState = InitialState;
-	PortalNeedsUpdate = true;
+	bPortalNeedsUpdate = true;
 }
 
 void UAkPortalComponent::ResetPortalOcclusion()
@@ -454,6 +474,7 @@ bool UAkPortalComponent::UpdateConnectedRooms(bool in_bForceUpdate/* = false*/)
 	TWeakObjectPtr<UAkRoomComponent> pPreviousBack = BackRoom;
 	AkRoomID previousFrontID = GetFrontRoomID();
 	AkRoomID previousBackID = GetBackRoomID();
+
 	/* Update the room connections */
 	FrontRoom = TWeakObjectPtr<UAkRoomComponent>();
 	BackRoom = TWeakObjectPtr<UAkRoomComponent>();
@@ -465,7 +486,9 @@ bool UAkPortalComponent::UpdateConnectedRooms(bool in_bForceUpdate/* = false*/)
 	bool bRoomsChanged = false;
 	bool PortalIsValid = PortalPlacementValid();
 
-	if (in_bForceUpdate || GetFrontRoomID() != previousFrontID)
+	// Update the portal if the rooms have changed or if the previous rooms were stale
+	// A room can become stale when it is unregistered.
+	if (in_bForceUpdate || GetFrontRoomID() != previousFrontID || pPreviousFront.IsStale())
 	{
 		bRoomsChanged = true;
 
@@ -491,7 +514,7 @@ bool UAkPortalComponent::UpdateConnectedRooms(bool in_bForceUpdate/* = false*/)
 		}
 	}
 
-	if (in_bForceUpdate || GetBackRoomID() != previousBackID)
+	if (in_bForceUpdate || GetBackRoomID() != previousBackID || pPreviousBack.IsStale())
 	{
 		bRoomsChanged = true;
 
@@ -523,7 +546,7 @@ bool UAkPortalComponent::UpdateConnectedRooms(bool in_bForceUpdate/* = false*/)
 
 	if (bRoomsChanged)
 	{
-		PortalNeedsUpdate = true;
+		bPortalNeedsUpdate = true;
 #if WITH_EDITOR
 		UpdateRoomNames();
 #endif
@@ -533,7 +556,7 @@ bool UAkPortalComponent::UpdateConnectedRooms(bool in_bForceUpdate/* = false*/)
 	UpdateTextLocRotVis();
 #endif
 
-	PortalRoomsNeedUpdate = false;
+	bPortalRoomsNeedUpdate = false;
 
 	/* Return true if any room connection has changed. */
 	return bRoomsChanged;
@@ -681,6 +704,7 @@ void UAkPortalComponent::InitTextVisualizers()
 			Text->bAlwaysRenderAsText = true;
 			Text->SetHorizontalAlignment(EHTA_Center);
 			Text->SetWorldScale3D(FVector(1.0f));
+			Text->SetHiddenInGame(!GetDefault<UAkSettingsPerUser>()->VisualizeRoomsAndPortals);
 		}
 		FrontRoomText->SetVerticalAlignment(EVRTA_TextTop);
 		BackRoomText->SetVerticalAlignment(EVRTA_TextBottom);
@@ -691,11 +715,13 @@ void UAkPortalComponent::DestroyTextVisualizers()
 {
 	if (FrontRoomText != nullptr)
 	{
+		FrontRoomText->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, /*bCallModify=*/ false));
 		FrontRoomText->DestroyComponent();
 		FrontRoomText = nullptr;
 	}
 	if (BackRoomText != nullptr)
 	{
+		BackRoomText->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, /*bCallModify=*/ false));
 		BackRoomText->DestroyComponent();
 		BackRoomText = nullptr;
 	}
@@ -764,8 +790,9 @@ void UAkPortalComponent::UpdateTextVisibility()
 	if (GetOwner() == nullptr) return;
 
 	bool Visible = false;
+	bool visualizeRoomsAndPortals = GetDefault<UAkSettingsPerUser>()->VisualizeRoomsAndPortals;
 
-	if (GetDefault<UAkSettingsPerUser>()->VisualizeRoomsAndPortals)
+	if (visualizeRoomsAndPortals)
 	{
 		Visible = true;
 	}
@@ -786,9 +813,15 @@ void UAkPortalComponent::UpdateTextVisibility()
 	}
 
 	if (BackRoomText != nullptr)
+	{
 		BackRoomText->SetVisibility(Visible);
+		BackRoomText->SetHiddenInGame(!visualizeRoomsAndPortals);
+	}
 	if (FrontRoomText != nullptr)
+	{
 		FrontRoomText->SetVisibility(Visible);
+		BackRoomText->SetHiddenInGame(!visualizeRoomsAndPortals);
+	}
 }
 
 void UAkPortalComponent::UpdateTextLocRotVis()

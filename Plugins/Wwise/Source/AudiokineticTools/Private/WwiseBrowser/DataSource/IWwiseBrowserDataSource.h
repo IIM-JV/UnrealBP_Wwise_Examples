@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -30,7 +30,7 @@ public:
 
 	virtual bool Init() = 0;
 
-	virtual void ConstructTree(bool bShouldRefresh) = 0;
+	virtual bool ConstructTree(bool bShouldRefresh) = 0;
 
 	// Constructs the top-level root for the given type, along with its direct children
 	virtual FWwiseTreeItemPtr ConstructTreeRoot(EWwiseItemType::Type Type) = 0;

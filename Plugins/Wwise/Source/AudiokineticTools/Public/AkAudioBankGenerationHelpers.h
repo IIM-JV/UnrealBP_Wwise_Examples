@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -27,7 +27,7 @@ namespace AkAudioBankGenerationHelper
 	/**
 	 * Get path to the WwiseConsole application
 	 */
-	FString GetWwiseConsoleApplicationPath();
+	AUDIOKINETICTOOLS_API FString GetWwiseConsoleApplicationPath();
 
 	/**
 	 * Function to create the Generate SoundBanks window
@@ -35,7 +35,7 @@ namespace AkAudioBankGenerationHelper
 	 * @param pSoundBanks				List of SoundBanks to be pre-selected
 	 * @paramin_bShouldSaveWwiseProject	Whether the Wwise project should be saved or not
 	 */
-	void CreateGenerateSoundDataWindow(bool ProjectSave = false);
+	AUDIOKINETICTOOLS_API void CreateGenerateSoundDataWindow(bool ProjectSave = false);
 
 	enum class AkSoundDataClearFlags
 	{
@@ -46,5 +46,5 @@ namespace AkAudioBankGenerationHelper
 
 	ENUM_CLASS_FLAGS(AkSoundDataClearFlags)
 
-	void DoClearSoundData(AkSoundDataClearFlags ClearFlags);
+	AUDIOKINETICTOOLS_API void DoClearSoundData(AkSoundDataClearFlags ClearFlags);
 }

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "WaapiDataSource.h"
@@ -25,10 +25,11 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "IAudiokineticTools.h"
 #include "PackageTools.h"
 #include "WwiseItemType.h"
+#include "WwiseUnrealHelper.h"
 #include "Async/Async.h"
 #include "Dom/JsonObject.h"
 #include "Misc/Paths.h"
-#include "WaapiPicker/WwiseTreeItem.h"
+#include "Wwise/WwiseTreeItem.h"
 
 FWaapiDataSource::~FWaapiDataSource()
 {
@@ -88,14 +89,14 @@ bool FWaapiDataSource::TearDown()
 	return true;
 }
 
-void FWaapiDataSource::ConstructTree(bool bShouldRefresh)
+bool FWaapiDataSource::ConstructTree(bool bShouldRefresh)
 {
 	SCOPED_AUDIOKINETICTOOLS_EVENT_2(TEXT("FWaapiDataSource::ConstructTree"))
 
 	if (IsProjectLoaded() != EWwiseConnectionStatus::Connected)
 	{
 		UE_LOG(LogAudiokineticTools, Log, TEXT("Failed to construct Waapi Tree. The Wwise project is not connected."));
-		return;
+		return false;
 	}
 	{
 		FScopeLock AutoLock(&WaapiRootItemsLock);
@@ -107,6 +108,7 @@ void FWaapiDataSource::ConstructTree(bool bShouldRefresh)
 	{
 
 		FWwiseTreeItemPtr TreeRoot = ConstructTreeRoot(static_cast<EWwiseItemType::Type>(i));
+		if(TreeRoot)
 		{
 			FScopeLock AutoLock(&WaapiRootItemsLock);
 			RootItems.Add(TreeRoot);
@@ -119,6 +121,7 @@ void FWaapiDataSource::ConstructTree(bool bShouldRefresh)
 	{
 		WaapiDataSourceRefreshed.ExecuteIfBound();
 	}
+	return true;
 }
 
 FWwiseTreeItemPtr FWaapiDataSource::ConstructTreeRoot(EWwiseItemType::Type Type)
@@ -156,8 +159,7 @@ FWwiseTreeItemPtr FWaapiDataSource::ConstructTreeRoot(EWwiseItemType::Type Type)
 	}
 
 	// Create the new tree item
-	FWwiseTreeItemPtr NewRootParent = MakeShared<FWwiseTreeItem>(EWwiseItemType::BrowserDisplayNames[static_cast<int>(Type)], Path, nullptr, EWwiseItemType::Folder, InItemGuid);
-	NewRootParent->ShortId = ShortId;
+	FWwiseTreeItemPtr NewRootParent = MakeShared<FWwiseTreeItem>(EWwiseItemType::BrowserDisplayNames[static_cast<int>(Type)], Path, nullptr, EWwiseItemType::Folder, InItemGuid, ShortId);
 	NewRootParent->bWaapiRefExists = true;
 	NewRootParent->ChildCountInWwise = ItemChildrenCount;
 
@@ -166,20 +168,8 @@ FWwiseTreeItemPtr FWaapiDataSource::ConstructTreeRoot(EWwiseItemType::Type Type)
 
 FWwiseTreeItemPtr FWaapiDataSource::ConstructWwiseTreeItem(const TSharedPtr<FJsonObject>& InItemInfoObj)
 {
-	static const FString ValidPaths[] = {
-		EWwiseItemType::FolderNames[EWwiseItemType::Event],
-		EWwiseItemType::FolderNames[EWwiseItemType::AuxBus],
-		EWwiseItemType::FolderNames[EWwiseItemType::ActorMixer],
-		EWwiseItemType::FolderNames[EWwiseItemType::GameParameter],
-		EWwiseItemType::FolderNames[EWwiseItemType::State],
-		EWwiseItemType::FolderNames[EWwiseItemType::Switch],
-		EWwiseItemType::FolderNames[EWwiseItemType::Trigger],
-		EWwiseItemType::FolderNames[EWwiseItemType::AcousticTexture],
-		EWwiseItemType::FolderNames[EWwiseItemType::EffectShareSet]
-	};
-
-	static auto IsValidPath = [](const FString& Input, const auto& Source) -> bool {
-		for (const auto& Item : Source)
+	static auto IsValidPath = [](const FString& Input) -> bool {
+		for (const auto& Item : EWwiseItemType::FolderNames)
 		{
 			if (Input.StartsWith(WwiseWaapiHelper::BACK_SLASH + Item))
 			{
@@ -198,7 +188,7 @@ FWwiseTreeItemPtr FWaapiDataSource::ConstructWwiseTreeItem(const TSharedPtr<FJso
 	}
 
 	const FString ItemPath = InItemInfoObj->GetStringField(WwiseWaapiHelper::PATH);
-	if (IsValidPath(ItemPath, ValidPaths))
+	if (IsValidPath(ItemPath))
 	{
 		const FString ItemIdString = InItemInfoObj->GetStringField(WwiseWaapiHelper::ID);
 		FGuid InItemId = FGuid::NewGuid();
@@ -1082,14 +1072,47 @@ EWwiseConnectionStatus FWaapiDataSource::IsProjectLoaded()
 			return EWwiseConnectionStatus::SettingDisabled;
 		}
 	}
+#if AK_SUPPORT_WAAPI
 	if(FAkWaapiClient::IsProjectLoaded())
 	{
+		if(auto AkWaapiClient = FAkWaapiClient::Get())
+		{
+			FString WaapiPath;
+			TSharedPtr<FJsonObject> outJsonResult;
+			AkWaapiClient->Call(ak::wwise::core::getProjectInfo, MakeShareable(new FJsonObject()), MakeShareable(new FJsonObject()), outJsonResult, 500, false);
+			if(auto directoriesObject = outJsonResult->GetObjectField(TEXT("directories")))
+			{
+				WaapiPath = directoriesObject->GetStringField(TEXT("soundBankOutputRoot"));
+			}
+			FString UnrealPath = GetDefault<UAkSettings>()->RootOutputPath.Path;
+			auto UnrealRootOutputPath = FPaths::ConvertRelativePathToFull(WwiseUnrealHelper::GetContentDirectory(), UnrealPath);
+			auto WaapiRootOutputPath = FPaths::ConvertRelativePathToFull(WwiseUnrealHelper::GetContentDirectory(), WaapiPath);
+
+			WaapiRootOutputPath = WaapiRootOutputPath.Replace(TEXT("\\"), TEXT("/"));
+			UnrealRootOutputPath = UnrealRootOutputPath.Replace(TEXT("\\"), TEXT("/"));
+			if(!WaapiRootOutputPath.EndsWith("/"))
+			{
+				WaapiRootOutputPath += "/";
+			}
+
+			if(!UnrealRootOutputPath.EndsWith("/"))
+			{
+				UnrealRootOutputPath += "/";
+			}
+			FAkWaapiClient::ConvertProjectPath(WaapiRootOutputPath);
+			if(WaapiRootOutputPath != UnrealRootOutputPath)
+			{
+				return EWwiseConnectionStatus::WrongRootOutputPath;
+			}
+		}
+
 		return EWwiseConnectionStatus::Connected;
 	}
 	if(FAkWaapiClient::Get()->bIsWrongProjectLoaded)
 	{
 		return EWwiseConnectionStatus::WrongProjectOpened;
 	}
+#endif
 	return EWwiseConnectionStatus::WwiseNotOpen;
 }
 
@@ -1179,8 +1202,9 @@ bool FWaapiDataSource::CallWaapiGetInfoFrom(const FString& inFromField, const FS
 	// Request data from Wwise using WAAPI
 
 	return waapiClient->Call(ak::wwise::core::object::get, Args, Options, outJsonResult);
-#endif
+#else
 	return false;
+#endif
 }
 
 void FWaapiDataSource::UnsubscribeWaapiCallbacks()

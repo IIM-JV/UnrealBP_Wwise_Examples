@@ -3,14 +3,14 @@
   "Platform": "Windows",
   "BasePlatform": "Windows",
   "SchemaVersion": "16",
-  "SoundBankVersion": "150",
+  "SoundBankVersion": "154",
   "SoundBanks": [
    {
     "Id": "1355168291",
     "Type": "User",
     "GUID": "{701ECBBD-9C7B-4030-8CDB-749EE5D1C7B9}",
     "Language": "SFX",
-    "Hash": "{F14D5285-3CA2-D203-C3E8-082F848F2B06}",
+    "Hash": "{C7B2CDD7-D218-82CA-2D3E-9B129EC6FD69}",
     "ObjectPath": "Init",
     "ShortName": "Init",
     "Path": "Init.bnk",
@@ -120,6 +120,6 @@
     ]
    }
   ],
-  "FileHash": "{DAB10A9A-722E-3C77-057C-669FA89475DC}"
+  "FileHash": "{2E9DAB91-61A0-236A-0816-114597CE3542}"
  }
 }

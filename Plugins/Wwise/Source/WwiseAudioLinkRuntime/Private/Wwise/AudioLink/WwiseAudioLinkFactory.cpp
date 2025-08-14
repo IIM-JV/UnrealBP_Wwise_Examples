@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/AudioLink/WwiseAudioLinkFactory.h"
@@ -246,10 +246,18 @@ FName FWwiseAudioLinkFactory::GetFactoryNameStatic()
 
 IAudioLinkFactory::FAudioLinkSynchronizerSharedPtr FWwiseAudioLinkFactory::CreateSynchronizerAudioLink()
 {
-	UE_LOG(LogWwiseAudioLink, VeryVerbose, TEXT("FWwiseAudioLinkFactory: Creating AudioLink Synchronizer"));
+	UE_LOG(LogWwiseAudioLink, VeryVerbose, TEXT("FWwiseAudioLinkFactory: Creating Wwise AudioLink Synchronizer"));
 
 	auto SynchronizerSP = MakeShared<FWwiseAudioLinkSynchronizer, ESPMode::ThreadSafe>();
-	SynchronizerSP->Bind();
+
+	// AudioMixerPlatformAudioLink will use NullDevice if we fail to start
+	// an audio stream. But we have to tell it to do so by returning a nullptr SynchronizeLink
+	if (!SynchronizerSP->Bind())
+	{
+		UE_LOG(LogWwiseAudioLink, Verbose, TEXT("FWwiseAudioLinkFactory: Failed to bind Wwise AudioLink Synchronizer"));
+		return nullptr;
+	}
+
 	return SynchronizerSP;
 }
 

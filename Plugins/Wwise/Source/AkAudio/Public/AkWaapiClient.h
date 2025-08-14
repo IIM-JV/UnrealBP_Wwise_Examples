@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -179,9 +179,12 @@ public:
     * @param out_result	A JSON object that contains useful information about the Call process to a specific event, gets an error infos in case the Call fails.
     * @return				A boolean to ensure that the call was successfully passed.
     */
-    bool Call(const char* in_uri, const FString& in_args, const FString& in_options, FString& out_result, int in_iTimeoutMs = 500, bool silenceLog = false);
+    bool Call(const char* in_uri, const FString& in_args, const FString& in_options, FString& out_result, int in_iTimeoutMs, bool silenceLog = false);
+    bool Call(const char* in_uri, const FString& in_args, const FString& in_options, FString& out_result, bool silenceLog = false);
     bool Call(const char* in_uri, const TSharedRef<FJsonObject>& in_args, const TSharedRef<FJsonObject>& in_options,
-        TSharedPtr<FJsonObject>& out_result, int in_iTimeoutMs = 500, bool silenceLog = false);
+        TSharedPtr<FJsonObject>& out_result, int in_iTimeoutMs, bool silenceLog = false);
+    bool Call(const char* in_uri, const TSharedRef<FJsonObject>& in_args, const TSharedRef<FJsonObject>& in_options,
+    TSharedPtr<FJsonObject>& out_result, bool silenceLog = false);
 
     /**
     * Call WAAPI to change the object name form the path or the id of the object (inFromIdOrPath).
@@ -209,6 +212,7 @@ public:
     void ConnectionEstablished();
     void BroadcastConnectionLost();
     static bool IsProjectLoaded();
+    static void ConvertProjectPath(FString& Path);
 
     /**
      *  Indicates that the connection to WAAPI should be stopped and shouldn't be reconnected.

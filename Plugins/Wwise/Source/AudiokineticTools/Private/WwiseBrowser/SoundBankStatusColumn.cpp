@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "SoundBankStatusColumn.h"
@@ -34,6 +34,10 @@ FText FSoundBankStatusColumn::GetDisplayedName(FWwiseTreeItemPtr TreeItem)
 	{
 		return LOCTEXT("UAssetStatusUpToDate", "UAsset Up to Date");
 	}
+	else if(TreeItem->IsUAssetOrphaned())
+	{
+		return LOCTEXT("UAssetStatusOrphaned", "UAsset Orphaned");
+	}
 	else if(TreeItem->IsUAssetOutOfDate())
 	{
 		return LOCTEXT("UAssetOutOfDate", "UAsset Needs Update");
@@ -42,13 +46,13 @@ FText FSoundBankStatusColumn::GetDisplayedName(FWwiseTreeItemPtr TreeItem)
 	{
 		return LOCTEXT("UAssetStatusRename", "Renamed in SoundBank");
 	}
-	else if(TreeItem->IsUAssetOrphaned())
-	{
-		return LOCTEXT("UAssetStatusOrphaned", "UAsset Orphaned");
-	}
 	else if(TreeItem->HasMultipleUAssets())
 	{
 		return LOCTEXT("UAssetStatusMultiple", "Multiple UAssets");
+	}
+	else if(TreeItem->bIsInWrongLocation)
+	{
+		return LOCTEXT("UAssetStatusMoved", "UAsset in Wrong Location");
 	}
 	else if(TreeItem->IsUAssetMissing())
 	{

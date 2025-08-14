@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -25,6 +25,9 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "AkAuxBus.h"
 #include "AkTrigger.h"
 #include "AkRtpc.h"
+#include "AkAudioDeviceShareSet.h"
+#include "AkStateValue.h"
+#include "AkSwitchValue.h"
 
 template<typename AkAssetType>
 class FAkAssetTypeActions_Base : public FAssetTypeActions_Base
@@ -84,6 +87,28 @@ public:
 	virtual void OpenAssetEditor( const TArray<UObject*>& InObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>() );
 };
 
+class FAssetTypeActions_AkSwitchValue : public FAkAssetTypeActions_Base<UAkSwitchValue>
+{
+public:
+	FAssetTypeActions_AkSwitchValue(EAssetTypeCategories::Type InAssetCategory) : FAkAssetTypeActions_Base(InAssetCategory) {}
+
+	// IAssetTypeActions Implementation
+	virtual FText GetName() const override { return NSLOCTEXT("AkAssetTypeActions", "AssetTypeActions_AkSwitchValue", "Audiokinetic Switch Value"); }
+	virtual FColor GetTypeColor() const override { return FColor(128, 192, 128); }
+	virtual void OpenAssetEditor( const TArray<UObject*>& InObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>() );
+};
+
+class FAssetTypeActions_AkStateValue : public FAkAssetTypeActions_Base<UAkStateValue>
+{
+public:
+	FAssetTypeActions_AkStateValue(EAssetTypeCategories::Type InAssetCategory) : FAkAssetTypeActions_Base(InAssetCategory) {}
+
+	// IAssetTypeActions Implementation
+	virtual FText GetName() const override { return NSLOCTEXT("AkAssetTypeActions", "AssetTypeActions_AkStateValue", "Audiokinetic State Value"); }
+	virtual FColor GetTypeColor() const override { return FColor(128, 192, 128); }
+	virtual void OpenAssetEditor( const TArray<UObject*>& InObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>() );
+};
+
 
 class FAssetTypeActions_AkRtpc : public FAkAssetTypeActions_Base<UAkRtpc>
 {
@@ -105,3 +130,12 @@ public:
 	virtual FColor GetTypeColor() const override { return FColor(128, 192, 128); }
 };
 
+class FAssetTypeActions_AkAudioDeviceShareSet : public FAkAssetTypeActions_Base<UAkAudioDeviceShareSet>
+{
+public:
+	FAssetTypeActions_AkAudioDeviceShareSet(EAssetTypeCategories::Type InAssetCategory) : FAkAssetTypeActions_Base(InAssetCategory) {}
+
+	// IAssetTypeActions Implementation
+	virtual FText GetName() const override { return NSLOCTEXT("AkAssetTypeActions", "AssetTypeActions_AkAudioDeviceShareSet", "Audiokinetic AudioDevice ShareSet"); }
+	virtual FColor GetTypeColor() const override { return FColor(128, 192, 128); }
+};

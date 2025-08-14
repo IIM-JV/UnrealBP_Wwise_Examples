@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "AkAudioModule.h"
@@ -22,6 +22,7 @@ Copyright (c) 2024 Audiokinetic Inc.
 #include "AkSettingsPerUser.h"
 #include "WwiseUnrealDefines.h"
 
+#include "Wwise/Packaging/WwiseAssetLibrary.h"
 #include "Wwise/WwiseResourceLoader.h"
 #include "Wwise/WwiseSoundEngineModule.h"
 #include "WwiseInitBankLoader/WwiseInitBankLoader.h"
@@ -43,8 +44,14 @@ Copyright (c) 2024 Audiokinetic Inc.
 #if WITH_EDITOR
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "HAL/FileManager.h"
+#include "Wwise/WwisePackagingEditorModule.h"
+#include "Wwise/Packaging/WwiseAssetLibraryPreCooker.h"
 #endif
 #include "Async/Async.h"
+#include "Platforms/AkPlatformInfo.h"
+#include "Wwise/WwisePackagingModule.h"
+#include "Wwise/WwiseExternalSourceManager.h"
+#include "Wwise/Packaging/WwisePackagingSettings.h"
 
 IMPLEMENT_MODULE(FAkAudioModule, AkAudio)
 #define LOCTEXT_NAMESPACE "AkAudio"
@@ -57,13 +64,23 @@ FSimpleMulticastDelegate FAkAudioModule::OnWwiseAssetDataReloaded;
 
 namespace WwiseUnrealHelper
 {
-	static FString GetWwisePluginDirectoryImpl()
+	static bool IsValidClass(UClass* inClass)
 	{
-		return FAkPlatform::GetWwisePluginDirectory();
+		return IsValid(inClass) && inClass->GetName() != "None";
+	}
+	
+	static FString GetWwiseSoundEnginePluginDirectoryImpl()
+	{
+		return FAkPlatform::GetWwiseSoundEnginePluginDirectory();
 	}
 
 	static FString GetWwiseProjectPathImpl()
 	{
+		if(!IsValidClass(UAkSettings::StaticClass()))
+		{
+			return {};
+		}
+
 		FString projectPath;
 
 		if (auto* settings = GetDefault<UAkSettings>())
@@ -85,6 +102,11 @@ namespace WwiseUnrealHelper
 
 	static FString GetSoundBankDirectoryImpl()
 	{
+		if(!IsValidClass(UAkSettingsPerUser::StaticClass()) || !IsValidClass(UAkSettings::StaticClass()))
+		{
+			return {};
+		}
+
 		const UAkSettingsPerUser* UserSettings = GetDefault<UAkSettingsPerUser>();
 		FString SoundBankDirectory;
 		if (UserSettings && !UserSettings->RootOutputPathOverride.Path.IsEmpty())
@@ -121,21 +143,20 @@ namespace WwiseUnrealHelper
 		return SoundBankDirectory;
 	}
 
-	static FString GetStagePathImpl()
+	static FString GetStagePathFromSettings()
 	{
+		if(!IsValidClass(UAkSettings::StaticClass()))
+		{
+			return {};
+		}
+
+		// In !WITH_EDITORONLY_DATA, you must prepend `FPaths::ProjectContentDir() /` to the defined Stage Path
 		const UAkSettings* Settings = GetDefault<UAkSettings>();
-#if WITH_EDITORONLY_DATA
 		if (Settings && !Settings->WwiseStagingDirectory.Path.IsEmpty())
 		{
 			return Settings->WwiseStagingDirectory.Path;
 		}
 		return TEXT("WwiseAudio");
-#endif
-		if (Settings && !Settings->WwiseStagingDirectory.Path.IsEmpty())
-		{
-			return FPaths::ProjectContentDir() / Settings->WwiseStagingDirectory.Path;
-		}
-		return FPaths::ProjectContentDir() / TEXT("WwiseAudio");
 	}
 }
 
@@ -143,10 +164,9 @@ void FAkAudioModule::StartupModule()
 {
 	IWwiseSoundEngineModule::ForceLoadModule();
 	WwiseUnrealHelper::SetHelperFunctions(
-		WwiseUnrealHelper::GetWwisePluginDirectoryImpl,
+		WwiseUnrealHelper::GetWwiseSoundEnginePluginDirectoryImpl,
 		WwiseUnrealHelper::GetWwiseProjectPathImpl,
-		WwiseUnrealHelper::GetSoundBankDirectoryImpl,
-		WwiseUnrealHelper::GetStagePathImpl);
+		WwiseUnrealHelper::GetSoundBankDirectoryImpl);
 
 #if WITH_EDITOR
 	// It is not wanted to initialize the SoundEngine while running the GenerateSoundBanks commandlet.
@@ -183,7 +203,7 @@ void FAkAudioModule::StartupModule()
 	FScopedSlowTask SlowTask(0, LOCTEXT("InitWwisePlugin", "Initializing Wwise Plug-in AkAudioModule..."));
 
 #if !UE_SERVER
-	UpdateWwiseResourceLoaderSettings();
+	UpdateWwiseResourceCookerSettings();
 #endif
 	
 #if WITH_EDITORONLY_DATA
@@ -193,11 +213,24 @@ void FAkAudioModule::StartupModule()
 		{
 			ParseGeneratedSoundBankData();
 			FWwiseInitBankLoader::Get()->UpdateInitBankInSettings();
+#if !UE_SERVER
+			UpdateWwiseResourceCookerSettings();
+#endif
 		}
 	}
 
 	// Loading the File Handler Module, in case it loads a different module with UStructs, so it gets packaged (Ex.: Simple External Source Manager)
 	IWwiseFileHandlerModule::GetModule();
+
+	// Loading the AssetLibrary module to set the cooking initialization function
+	if (auto* PackagingModule = IWwisePackagingModule::GetModule())
+	{
+		PackagingModule->SetCreateResourceCookerForPlatformFct([](const ITargetPlatform* TargetPlatform)
+		{
+			CreateResourceCookerForPlatform(TargetPlatform);
+		});
+	}
+	
 #endif
 
 	AkAudioDevice = new FAkAudioDevice;
@@ -207,6 +240,28 @@ void FAkAudioModule::StartupModule()
 		bModuleInitialized = true;
 		return;
 	}
+
+	// Loading Asset Libraries
+#if !WITH_EDITORONLY_DATA && !UE_SERVER
+	{
+		if (auto* PackagingSettings = GetDefault<UWwisePackagingSettings>())
+		{
+			bool bPackageAsBulkData = PackagingSettings->bPackageAsBulkData;
+			const auto& AssetLibraries = PackagingSettings->AssetLibraries;
+			if (bPackageAsBulkData && AssetLibraries.Num() > 0)
+			{
+				FScopedSlowTask SlowTaskAssetLibrary(0, LOCTEXT("InitAssetLibraries", "Initializing Wwise AssetLibrary..."));
+				for (const auto& AssetLibrary : AssetLibraries)
+				{
+					SCOPED_AKAUDIO_EVENT_F_2(TEXT("FAkAudioModule::StartupModule: Loading AssetLibrary(%s)"), *AssetLibrary.GetAssetName());
+					UE_LOG(LogAkAudio, Verbose, TEXT("FAkAudioModule::StartupModule: Loading Asset Library %s"), *AssetLibrary.GetAssetName());
+					auto* Loaded = AssetLibrary.LoadSynchronous();
+					UE_CLOG(UNLIKELY(!Loaded), LogAkAudio, Warning, TEXT("FAkAudioModule::StartupModule: Unable to load asset library %s."), *AssetLibrary.GetAssetName());
+				}
+			}
+		}
+	}
+#endif
 
 	if (!AkAudioDevice->Init())
 	{
@@ -246,7 +301,7 @@ void FAkAudioModule::ShutdownModule()
 
 	if (IWwiseSoundEngineModule::IsAvailable())
 	{
-		WwiseUnrealHelper::SetHelperFunctions(nullptr, nullptr, nullptr, nullptr);
+		WwiseUnrealHelper::SetHelperFunctions(nullptr, nullptr, nullptr);
 	}
 
 	AkAudioModuleInstance = nullptr;
@@ -290,43 +345,155 @@ void FAkAudioModule::ReloadWwiseAssetData() const
 	}
 }
 
-void FAkAudioModule::UpdateWwiseResourceLoaderSettings()
+void FAkAudioModule::UpdateWwiseResourceCookerSettings()
 {
-	SCOPED_AKAUDIO_EVENT(TEXT("UpdateWwiseResourceLoaderSettings"));
-	UE_LOG(LogAkAudio, Log, TEXT("FAkAudioModule::UpdateWwiseResourceLoaderSettings : Updating Resource Loader settings."));
-
-	auto* ResourceLoader = FWwiseResourceLoader::Get();
-	if (!ResourceLoader)
-	{
-		UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::UpdateWwiseResourceLoaderSettings : No Resource Loader!"));
-		return;
-	}
-	auto* ResourceLoaderImpl = ResourceLoader->ResourceLoaderImpl.Get();
-	if (!ResourceLoaderImpl)
-	{
-		UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::UpdateWwiseResourceLoaderSettings : No Resource Loader Impl!"));
-		return;
-	}
-
-	ResourceLoaderImpl->StagePath = WwiseUnrealHelper::GetStagePathImpl();
-
 #if WITH_EDITORONLY_DATA
-	ResourceLoaderImpl->GeneratedSoundBanksPath = FDirectoryPath{WwiseUnrealHelper::GetSoundBankDirectory()};
+	SCOPED_AKAUDIO_EVENT(TEXT("UpdateWwiseResourceCookerSettings"));
+
+	auto* ResourceCooker = IWwiseResourceCooker::GetDefault();
+	if (!ResourceCooker)
+	{
+		UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::UpdateWwiseResourceCookerSettings : No Default Resource Cooker!"));
+		return;
+	}
+	auto* ProjectDatabase = ResourceCooker->GetProjectDatabase();
+	if (!ProjectDatabase)
+	{
+		UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::UpdateWwiseResourceCookerSettings : No Project Database!"));
+		return;
+	}
+	auto ExternalSourceManager = IWwiseExternalSourceManager::Get();
+	if (!ExternalSourceManager)
+	{
+		UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::UpdateWwiseResourceCookerSettings : No External Source Manager!"))
+		return;
+	}
+
+	const auto StagePath = WwiseUnrealHelper::GetStagePathFromSettings();
+	ResourceCooker->SetWwiseStagePath(StagePath);
+
+	const auto SoundBankDirectory = WwiseUnrealHelper::GetSoundBankDirectory();
+	ProjectDatabase->SetGeneratedSoundBanksPath(FDirectoryPath{ SoundBankDirectory });
+
+	const auto& Platform = ProjectDatabase->GetCurrentPlatform().Platform.Get();
+	if (!Platform.ExternalSourceRootPath.IsNone())
+	{
+		auto ExternalSourcePath = Platform.PathRelativeToGeneratedSoundBanks.ToString() / Platform.ExternalSourceRootPath.ToString();
+		if (FPaths::IsRelative(ExternalSourcePath))
+		{
+			ExternalSourcePath = SoundBankDirectory / ExternalSourcePath;
+		}
+		ExternalSourceManager->SetExternalSourcePath(FDirectoryPath{ExternalSourcePath });
+	}
 #endif
 }
 
 #if WITH_EDITORONLY_DATA
-void FAkAudioModule::ParseGeneratedSoundBankData()
+void FAkAudioModule::CreateResourceCookerForPlatform(const ITargetPlatform* TargetPlatform)
 {
-	SCOPED_AKAUDIO_EVENT(TEXT("ParseGeneratedSoundBankData"));
-	if (auto* AkSettings = GetDefault<UAkSettings>())
+	SCOPED_AKAUDIO_EVENT(TEXT("CreateResourceCookerForPlatform"));
+
+	auto* ResourceCooker = IWwiseResourceCooker::GetForPlatform(TargetPlatform);
+	FWwiseProjectDatabase* ProjectDatabase;
+
+	if (LIKELY(ResourceCooker))
 	{
-		if (!AkSettings->AreSoundBanksGenerated())
+		ProjectDatabase = ResourceCooker->GetProjectDatabase();
+		if (!ProjectDatabase)
 		{
-			UE_LOG(LogAkAudio, Warning, TEXT("FAkAudioModule::ParseGeneratedSoundBankData: SoundBanks are not yet generated, nothing to parse.\nCurrent Generated SoundBanks path is: %s"), *WwiseUnrealHelper::GetSoundBankDirectory());
+			UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::CreateResourceCookerForPlatform : No Project Database!"));
 			return;
 		}
 	}
+	else
+	{
+		const auto PlatformID = UAkPlatformInfo::GetSharedPlatformInfo(TargetPlatform->IniPlatformName());
+		if (UNLIKELY(!PlatformID.IsValid()))
+		{
+			UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::CreateResourceCookerForPlatform : Could not get platform info for target %s!"), *TargetPlatform->IniPlatformName());
+			return;
+		}
+
+		bool bPackageAsBulkData{ false };
+		const FWwiseAssetLibraryPreCooker::FAssetLibraryArray* AssetLibraries { nullptr };
+		if (auto* WwisePackagingSettings = GetDefault<UWwisePackagingSettings>())
+		{
+			bPackageAsBulkData = WwisePackagingSettings->bPackageAsBulkData;
+			AssetLibraries = &WwisePackagingSettings->AssetLibraries;
+		}
+
+		if(IsRunningCookCommandlet() && FParse::Param(FCommandLine::Get(), TEXT("DisableWwiseBulkData")))
+		{
+			UE_LOG(LogAkAudio, Display, TEXT("FAkAudioModule::CreateResourceCookerForPlatform : Disabling bulk data packaging because of command line."));
+			bPackageAsBulkData = false;
+		}
+		
+		EWwisePackagingStrategy TargetPackagingStrategy{ EWwisePackagingStrategy::AdditionalFile };
+		if (bPackageAsBulkData)
+		{
+			TargetPackagingStrategy = EWwisePackagingStrategy::BulkData;
+		}
+
+		ResourceCooker = IWwiseResourceCooker::CreateForPlatform(TargetPlatform, PlatformID, TargetPackagingStrategy, EWwiseExportDebugNameRule::Name);
+		if (UNLIKELY(!ResourceCooker))
+		{
+			UE_CLOG(!TargetPlatform->IsServerOnly(), LogAkAudio, Error, TEXT("FAkAudioModule::CreateResourceCookerForPlatform : Could not create Resource Cooker!"));
+			return;
+		}
+
+		ProjectDatabase = ResourceCooker->GetProjectDatabase();
+		if (!ProjectDatabase)
+		{
+			UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::CreateResourceCookerForPlatform : No Project Database!"));
+			return;
+		}
+
+		if (bPackageAsBulkData && AssetLibraries && AssetLibraries->Num() > 0)
+		{
+			auto* AssetLibraryEditorModule = IWwisePackagingEditorModule::GetModule();
+			if (UNLIKELY(!AssetLibraryEditorModule))
+			{
+				UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::CreateResourceCookerForPlatform : Could not get AssetLibraryEditor module!"));
+				return;
+			}
+			const TUniquePtr<FWwiseAssetLibraryPreCooker> AssetLibraryPreCooker { AssetLibraryEditorModule ? AssetLibraryEditorModule->InstantiatePreCooker(*ProjectDatabase) : nullptr };
+			if (!AssetLibraryPreCooker)
+			{
+				UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::CreateResourceCookerForPlatform : Could not create AssetLibrary PreCooker!"));
+				return;
+			}
+			ResourceCooker->PreCacheAssetLibraries(AssetLibraryPreCooker->Process(*AssetLibraries));
+		}
+	}
+	
+	auto ExternalSourceManager = IWwiseExternalSourceManager::Get();
+	if (!ExternalSourceManager)
+	{
+		UE_LOG(LogAkAudio, Error, TEXT("FAkAudioModule::CreateResourceCookerForPlatform : No External Source Manager!"))
+		return;
+	}
+
+	const auto StagePath = WwiseUnrealHelper::GetStagePathFromSettings();
+	ResourceCooker->SetWwiseStagePath(StagePath);
+
+	const auto SoundBankDirectory = WwiseUnrealHelper::GetSoundBankDirectory();
+	ProjectDatabase->SetGeneratedSoundBanksPath(FDirectoryPath{ SoundBankDirectory });
+
+	const auto& Platform = ProjectDatabase->GetCurrentPlatform().Platform.Get();
+	if (!Platform.ExternalSourceRootPath.IsNone())
+	{
+		auto ExternalSourcePath = Platform.PathRelativeToGeneratedSoundBanks.ToString() / Platform.ExternalSourceRootPath.ToString();
+		if (FPaths::IsRelative(ExternalSourcePath))
+		{
+			ExternalSourcePath = SoundBankDirectory / ExternalSourcePath;
+		}
+		ExternalSourceManager->SetExternalSourcePath(FDirectoryPath{ExternalSourcePath });
+	}
+}
+
+void FAkAudioModule::ParseGeneratedSoundBankData()
+{
+	SCOPED_AKAUDIO_EVENT(TEXT("ParseGeneratedSoundBankData"));
 	UE_LOG(LogAkAudio, Log, TEXT("FAkAudioModule::ParseGeneratedSoundBankData : Parsing Wwise project data."));
 	auto* ProjectDatabase = FWwiseProjectDatabase::Get();
 	if (UNLIKELY(!ProjectDatabase))

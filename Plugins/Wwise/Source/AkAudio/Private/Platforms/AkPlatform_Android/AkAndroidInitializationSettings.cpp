@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Platforms/AkPlatform_Android/AkAndroidInitializationSettings.h"
@@ -34,6 +34,7 @@ void FAkAndroidAdvancedInitializationSettings::FillInitializationStructure(FAkIn
 #if PLATFORM_ANDROID
 	InitializationStructure.PlatformInitSettings.eAudioAPI = static_cast<AkAudioAPI>(AudioAPI);
 	InitializationStructure.PlatformInitSettings.bRoundFrameSizeToHWSize = RoundFrameSizeToHardwareSize;
+	InitializationStructure.PlatformInitSettings.bVerboseSink = bVerboseSink;
 #if WWISE_2023_1_OR_LATER
 	InitializationStructure.PlatformInitSettings.bEnableLowLatency = UseLowLatencyMode;
 #endif

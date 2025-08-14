@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/WwiseIOHookImpl.h"
@@ -26,15 +26,10 @@ Copyright (c) 2024 Audiokinetic Inc.
 
 #include "Wwise/Stats/AsyncStats.h"
 
-#include "WwiseDefines.h"
 #include "WwiseUnrealDefines.h"
 
 #include "Async/Async.h"
-#if UE_5_0_OR_LATER
 #include "HAL/PlatformFileManager.h"
-#else
-#include "HAL/PlatformFilemanager.h"
-#endif
 
 #include <inttypes.h>
 
@@ -51,17 +46,17 @@ FWwiseIOHookImpl::FWwiseIOHookImpl() :
 bool FWwiseIOHookImpl::Init(const AkDeviceSettings& InDeviceSettings)
 {
 	SCOPED_WWISEFILEHANDLER_EVENT_2(TEXT("FWwiseIOHookImpl::Init"));
-	auto* ExternalSourceManager = IWwiseExternalSourceManager::Get();
+	auto ExternalSourceManager = IWwiseExternalSourceManager::Get();
 	if (LIKELY(ExternalSourceManager))
 	{
 		ExternalSourceManager->SetGranularity(InDeviceSettings.uGranularity);
 	}
-	auto* MediaManager = IWwiseMediaManager::Get();
+	auto MediaManager = IWwiseMediaManager::Get();
 	if (LIKELY(MediaManager))
 	{
 		MediaManager->SetGranularity(InDeviceSettings.uGranularity);
 	}
-	auto* SoundBankManager = IWwiseSoundBankManager::Get();
+	auto SoundBankManager = IWwiseSoundBankManager::Get();
 	if (LIKELY(SoundBankManager))
 	{
 		SoundBankManager->SetGranularity(InDeviceSettings.uGranularity);
@@ -166,7 +161,7 @@ AKRESULT FWwiseIOHookImpl::Read(
 	auto* FileState = FWwiseStreamableFileStateInfo::GetFromFileDesc(in_fileDesc);
 	if (UNLIKELY(!FileState))
 	{
-		UE_LOG(LogWwiseFileHandler, Warning, TEXT("FWwiseIOHookImpl::Read [%p]: Could not find File Descriptor"), AK_FILEHANDLE_TO_UINTPTR(in_fileDesc.hFile));
+		UE_LOG(LogWwiseFileHandler, Warning, TEXT("FWwiseIOHookImpl::Read [%" PRIu64 "]: Could not find File Descriptor"), AK_FILEHANDLE_TO_UINTPTR(in_fileDesc.hFile));
 		ASYNC_INC_DWORD_STAT(STAT_WwiseFileHandlerTotalErrorCount);
 		ASYNC_DEC_DWORD_STAT(STAT_WwiseFileHandlerPendingRequests);
 #ifndef AK_OPTIMIZED
@@ -177,7 +172,7 @@ AKRESULT FWwiseIOHookImpl::Read(
 
 	if (UNLIKELY(!FileState->CanProcessFileOp()))
 	{
-		UE_LOG(LogWwiseFileHandler, Verbose, TEXT("FWwiseIOHookImpl::Read [%p]: FileState is not properly initialized for reading"), AK_FILEHANDLE_TO_UINTPTR(in_fileDesc.hFile));
+		UE_LOG(LogWwiseFileHandler, Verbose, TEXT("FWwiseIOHookImpl::Read [%" PRIu64 "]: FileState is not properly initialized for reading"), AK_FILEHANDLE_TO_UINTPTR(in_fileDesc.hFile));
 		
 		ASYNC_INC_DWORD_STAT(STAT_WwiseFileHandlerTotalErrorCount);
 		ASYNC_DEC_DWORD_STAT(STAT_WwiseFileHandlerPendingRequests);
@@ -187,7 +182,7 @@ AKRESULT FWwiseIOHookImpl::Read(
 		return AK_UnknownFileError;
 	}
 
-	UE_LOG(LogWwiseFileHandler, VeryVerbose, TEXT("FWwiseIOHookImpl::Read [%p]: Reading %" PRIu32 " bytes @ %" PRIu64 " - Priority %" PRIi8 " Deadline %f"),
+	UE_LOG(LogWwiseFileHandler, VeryVerbose, TEXT("FWwiseIOHookImpl::Read [%" PRIu64 "]: Reading %" PRIu32 " bytes @ %" PRIu64 " - Priority %" PRIi8 " Deadline %f"),
 		AK_FILEHANDLE_TO_UINTPTR(in_fileDesc.hFile), io_transferInfo.uRequestedSize, io_transferInfo.uFilePosition, in_heuristics.priority, (double)in_heuristics.fDeadline);
 	const auto Result = FileState->ProcessRead(in_fileDesc, in_heuristics, io_transferInfo,
 		[this, OpCycleCounter = MoveTemp(OpCycleCounter), hFile = in_fileDesc.hFile]
@@ -206,7 +201,7 @@ AKRESULT FWwiseIOHookImpl::Read(
 
 			if (UNLIKELY(!InTransferInfo->pCallback))
 			{
-				UE_LOG(LogWwiseFileHandler, Verbose, TEXT("FWwiseIOHookImpl::Read [%p]: No callback reading data"), AK_FILEHANDLE_TO_UINTPTR(hFile));
+				UE_LOG(LogWwiseFileHandler, Verbose, TEXT("FWwiseIOHookImpl::Read [%" PRIu64 "]: No callback reading data"), AK_FILEHANDLE_TO_UINTPTR(hFile));
 			}
 			else
 			{
@@ -266,7 +261,7 @@ AKRESULT FWwiseIOHookImpl::Write(
 	auto* FileState = FWwiseStreamableFileStateInfo::GetFromFileDesc(in_fileDesc);
 	if (!FileState)
 	{
-		UE_LOG(LogWwiseFileHandler, Warning, TEXT("FWwiseIOHookImpl::Write [%p]: Could not find File Descriptor"), AK_FILEHANDLE_TO_UINTPTR(in_fileDesc.hFile));
+		UE_LOG(LogWwiseFileHandler, Warning, TEXT("FWwiseIOHookImpl::Write [%" PRIu64 "]: Could not find File Descriptor"), AK_FILEHANDLE_TO_UINTPTR(in_fileDesc.hFile));
 		ASYNC_INC_DWORD_STAT(STAT_WwiseFileHandlerTotalErrorCount);
 		ASYNC_DEC_DWORD_STAT(STAT_WwiseFileHandlerPendingRequests);
 
@@ -276,7 +271,7 @@ AKRESULT FWwiseIOHookImpl::Write(
 		return AK_IDNotFound;
 	}
 
-	UE_LOG(LogWwiseFileHandler, VeryVerbose, TEXT("FWwiseIOHookImpl::Write [%p]: Writing %" PRIu32 " bytes @ %" PRIu64),
+	UE_LOG(LogWwiseFileHandler, VeryVerbose, TEXT("FWwiseIOHookImpl::Write [%" PRIu64 "]: Writing %" PRIu32 " bytes @ %" PRIu64),
 		AK_FILEHANDLE_TO_UINTPTR(in_fileDesc.hFile), io_transferInfo.uBufferSize, io_transferInfo.uFilePosition);
 	const auto Result = FileState->ProcessWrite(in_fileDesc, in_heuristics, io_transferInfo,
 		[this, OpCycleCounter = MoveTemp(OpCycleCounter), hFile = in_fileDesc.hFile]
@@ -295,7 +290,7 @@ AKRESULT FWwiseIOHookImpl::Write(
 
 			if (UNLIKELY(!InTransferInfo->pCallback))
 			{
-				UE_LOG(LogWwiseFileHandler, Verbose, TEXT("FWwiseIOHookImpl::Write [%p]: No callback reading data"), AK_FILEHANDLE_TO_UINTPTR(hFile));
+				UE_LOG(LogWwiseFileHandler, Verbose, TEXT("FWwiseIOHookImpl::Write [%" PRIu64 "]: No callback reading data"), AK_FILEHANDLE_TO_UINTPTR(hFile));
 			}
 			else
 			{
@@ -334,6 +329,7 @@ void FWwiseIOHookImpl::BatchWrite(
 	});
 }
 
+#if !WWISE_2024_1_OR_LATER
 void FWwiseIOHookImpl::BatchCancel(
 	AkUInt32 in_uNumTransfers,
 	BatchIoTransferItem* in_pTransferItems,
@@ -349,9 +345,10 @@ void FWwiseIOHookImpl::BatchCancel(
 	{
 		const auto& TransferItem = in_pTransferItems[i];
 		UE_CLOG(TransferItem.pFileDesc != nullptr,
-			LogWwiseFileHandler, VeryVerbose, TEXT("FWwiseIOHookImpl::BatchCancel [%p]: Cancelling transfer unsupported"), AK_FILEHANDLE_TO_UINTPTR(TransferItem.pFileDesc->hFile));
+			LogWwiseFileHandler, VeryVerbose, TEXT("FWwiseIOHookImpl::BatchCancel [%" PRIu64 "]: Cancelling transfer unsupported"), AK_FILEHANDLE_TO_UINTPTR(TransferItem.pFileDesc->hFile));
 	}
 }
+#endif
 
 AKRESULT FWwiseIOHookImpl::Close(AkFileDesc* in_pFileDesc)
 {
@@ -365,19 +362,19 @@ AKRESULT FWwiseIOHookImpl::Close(AkFileDesc* in_pFileDesc)
 
 	if (UNLIKELY(!IWwiseFileHandlerModule::IsAvailable()))
 	{
-		UE_LOG(LogWwiseFileHandler, Log, TEXT("FWwiseIOHookImpl::Close [%p]: Not closing file while engine is exiting."), AK_FILEHANDLE_TO_UINTPTR(in_pFileDesc->hFile));
+		UE_LOG(LogWwiseFileHandler, Log, TEXT("FWwiseIOHookImpl::Close [%" PRIu64 "]: Not closing file while engine is exiting."), AK_FILEHANDLE_TO_UINTPTR(in_pFileDesc->hFile));
 		return AK_Success;
 	}
 
 	auto* FileState = FWwiseStreamableFileStateInfo::GetFromFileDesc(*in_pFileDesc);
 	if (!FileState)
 	{
-		UE_LOG(LogWwiseFileHandler, Warning, TEXT("FWwiseIOHookImpl::Close [%p]: Could not find File Descriptor"), AK_FILEHANDLE_TO_UINTPTR(in_pFileDesc->hFile));
+		UE_LOG(LogWwiseFileHandler, Warning, TEXT("FWwiseIOHookImpl::Close [%" PRIu64 "]: Could not find File Descriptor"), AK_FILEHANDLE_TO_UINTPTR(in_pFileDesc->hFile));
 		ASYNC_INC_DWORD_STAT(STAT_WwiseFileHandlerTotalErrorCount);
 		return AK_IDNotFound;
 	}
 
-	UE_LOG(LogWwiseFileHandler, VeryVerbose, TEXT("FWwiseIOHookImpl::Close [%p]: Closing streaming file"), AK_FILEHANDLE_TO_UINTPTR(in_pFileDesc->hFile));
+	UE_LOG(LogWwiseFileHandler, VeryVerbose, TEXT("FWwiseIOHookImpl::Close [%" PRIu64 "]: Closing streaming file"), AK_FILEHANDLE_TO_UINTPTR(in_pFileDesc->hFile));
 	FileState->CloseStreaming();
 	return AK_Success;
 }
@@ -416,7 +413,7 @@ AkUInt32 FWwiseIOHookImpl::GetDeviceData()
 
 IWwiseStreamingManagerHooks* FWwiseIOHookImpl::GetStreamingHooks(const AkFileSystemFlags& InFileSystemFlag)
 {
-	IWwiseStreamableFileHandler* WwiseStreamableFileHandler = nullptr;
+	TSharedPtr<IWwiseStreamableFileHandler> WwiseStreamableFileHandler = nullptr;
 	if (InFileSystemFlag.uCompanyID == AKCOMPANYID_AUDIOKINETIC_EXTERNAL)
 	{
 		WwiseStreamableFileHandler = IWwiseExternalSourceManager::Get();

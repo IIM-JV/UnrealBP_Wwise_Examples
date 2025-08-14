@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -23,11 +23,8 @@ Copyright (c) 2024 Audiokinetic Inc.
 
 class WWISEFILEHANDLER_API FWwiseSoundBankFileState : public FWwiseFileState, public FWwiseSoundBankCookedData
 {
-public:
-	const FString RootPath;
-
 protected:
-	FWwiseSoundBankFileState(const FWwiseSoundBankCookedData& InCookedData, const FString& InRootPath);
+	FWwiseSoundBankFileState(const FWwiseSoundBankCookedData& InCookedData);
 
 public:
 	~FWwiseSoundBankFileState() override;
@@ -41,13 +38,10 @@ class WWISEFILEHANDLER_API FWwiseInMemorySoundBankFileState : public FWwiseSound
 public:
 	const uint8* Ptr;
 	int64 FileSize;
-	IMappedFileHandle* MappedHandle;
-	IMappedFileRegion* MappedRegion;
 
-	FWwiseInMemorySoundBankFileState(const FWwiseSoundBankCookedData& InCookedData, const FString& InRootPath);
+	FWwiseInMemorySoundBankFileState(const FWwiseSoundBankCookedData& InCookedData);
 	~FWwiseInMemorySoundBankFileState() override { Term(); }
 
-	bool LoadAsMemoryMapped() const;
 	bool LoadAsMemoryView() const;
 
 	void OpenFile(FOpenFileCallback&& InCallback) override;

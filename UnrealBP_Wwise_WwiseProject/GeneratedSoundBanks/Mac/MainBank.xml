@@ -1,66 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<SoundBanksInfo Platform="Mac" BasePlatform="Mac" SchemaVersion="16" SoundBankVersion="150">
+<SoundBanksInfo Platform="Mac" BasePlatform="Mac" SchemaVersion="16" SoundBankVersion="154">
 	<SoundBanks>
-		<SoundBank Id="2880737896" Type="User" GUID="{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}" Language="SFX" Hash="{6590A2F5-B807-6779-22F5-B8B71FCFBF28}">
+		<SoundBank Id="2880737896" Type="User" GUID="{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}" Language="SFX" Hash="{9066B780-26A2-2332-D0B5-76CF02B8B654}">
 			<ObjectPath>\SoundBanks\Default Work Unit\MainBank</ObjectPath>
 			<ShortName>MainBank</ShortName>
 			<Path>MainBank.bnk</Path>
 			<Media>
 				<File Id="8329402" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>footsteps.wav</ShortName>
-					<CachePath>SFX/footsteps_2C68707F.wem</CachePath>
+					<CachePath>39/{39497412-90C6-087E-A4DB-B3E364ACC0B6}.wem</CachePath>
 				</File>
 				<File Id="54523297" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>footsteps.wav</ShortName>
-					<CachePath>SFX/footsteps_71354518.wem</CachePath>
+					<CachePath>D7/{D76C44CB-10F3-2FCE-5E54-B3FDD85D0905}.wem</CachePath>
 				</File>
 				<File Id="82484177" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>footsteps.wav</ShortName>
-					<CachePath>SFX/footsteps_6005B77E.wem</CachePath>
+					<CachePath>DB/{DB47B9A1-2AE3-F5A2-EC26-12AE27958480}.wem</CachePath>
 				</File>
 				<File Id="142720177" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>footsteps.wav</ShortName>
-					<CachePath>SFX/footsteps_602CCC96.wem</CachePath>
+					<CachePath>F7/{F7009A72-1E4C-B441-9993-B8FFCC743CA3}.wem</CachePath>
 				</File>
 				<File Id="159752141" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>music_sad.wav</ShortName>
-					<CachePath>SFX/music_sad_FBC78EF0.wem</CachePath>
+					<CachePath>4C/{4C4E5857-8D99-34A6-1BE1-C6EE31F32F4F}.wem</CachePath>
 				</File>
 				<File Id="198988922" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>voice_05.wav</ShortName>
-					<CachePath>SFX/voice_05_818F3B66.wem</CachePath>
+					<CachePath>E5/{E520EC0F-E48D-4221-4E20-5DAA78530FF9}.wem</CachePath>
 				</File>
 				<File Id="205011271" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>voice_04.wav</ShortName>
-					<CachePath>SFX/voice_04_818F3B66.wem</CachePath>
+					<CachePath>6B/{6B57F6F8-849E-EACB-285F-1BB75663221B}.wem</CachePath>
 				</File>
 				<File Id="323996350" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>voice_02.wav</ShortName>
-					<CachePath>SFX/voice_02_818F3B66.wem</CachePath>
+					<CachePath>24/{240A5BA2-EFB3-3E0F-9B99-B669D4FCED85}.wem</CachePath>
 				</File>
 				<File Id="409211353" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>music_happy.wav</ShortName>
-					<CachePath>SFX/music_happy_FBC78EF0.wem</CachePath>
+					<CachePath>6F/{6F5E602C-7CCB-A6CC-2493-678A8698DD9C}.wem</CachePath>
 				</File>
 				<File Id="448581091" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>heartbeat.wav</ShortName>
-					<CachePath>SFX/heartbeat_CD2FC848.wem</CachePath>
+					<CachePath>17/{175A7C0A-DAB3-BD87-3745-5AFB4EB49060}.wem</CachePath>
 				</File>
 				<File Id="615935728" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>footsteps.wav</ShortName>
-					<CachePath>SFX/footsteps_C8D82F86.wem</CachePath>
+					<CachePath>10/{107652F0-99CE-AF6D-9E3A-90B940C6763E}.wem</CachePath>
 				</File>
 				<File Id="696380050" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>voice_03.wav</ShortName>
-					<CachePath>SFX/voice_03_818F3B66.wem</CachePath>
+					<CachePath>9E/{9E5EE674-2023-48FF-66B5-FA17297657B4}.wem</CachePath>
 				</File>
 				<File Id="962874116" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>beep.wav</ShortName>
-					<CachePath>SFX/beep_818F3B66.wem</CachePath>
+					<CachePath>05/{05F626C9-D210-548B-DB81-B9E480993A0A}.wem</CachePath>
 				</File>
 				<File Id="1002092669" Language="SFX" Streaming="false" Location="Memory">
 					<ShortName>voice_01.wav</ShortName>
-					<CachePath>SFX/voice_01_818F3B66.wem</CachePath>
+					<CachePath>E0/{E0A79D30-5EB7-130A-34A5-E5F11708A256}.wem</CachePath>
 				</File>
 			</Media>
 			<Events>
@@ -159,5 +159,5 @@
 			</SwitchGroups>
 		</SoundBank>
 	</SoundBanks>
-	<FileHash>{A75853A4-0B6A-BEAE-131B-1B0FB5A728EF}</FileHash>
+	<FileHash>{CE4C44C8-1B6C-1B41-A0F9-AAD734F8D8A9}</FileHash>
 </SoundBanksInfo>

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -181,6 +181,28 @@ bool AkReverbFadeControl::Prioritize(const AkReverbFadeControl& A, const AkRever
 	return A.bIsFadingOut < B.bIsFadingOut;
 }
 
+void UAkComponent::CleanListeners()
+{
+	FScopeLock Lock(&ListenerCriticalSection);
+	auto ListenerArray = Listeners.Array();
+	for(int i = 0; i < ListenerArray.Num();)
+	{
+		if(ListenerArray[i] == NULL || ListenerArray[i].IsStale())
+		{
+			ListenerArray.RemoveAt(i);
+		}
+		else
+		{
+			i++;
+		}
+	}
+	Listeners.Empty();
+	for(auto Listener : ListenerArray)
+	{
+		Listeners.Add(Listener);
+	}
+}
+
 /*------------------------------------------------------------------------------------
 	UAkComponent
 ------------------------------------------------------------------------------------*/
@@ -214,7 +236,6 @@ Super(ObjectInitializer)
 	bVisualizeComponent = true;
 #endif
 
-	AttenuationScalingFactor = 1.0f;
 	bAutoDestroy = false;
 	bUseDefaultListeners = true;
 
@@ -287,6 +308,7 @@ void UAkComponent::UpdateObstructionAndOcclusion()
 
 	if (World && AudioDevice && AudioDevice->ShouldNotifySoundEngine(World->WorldType))
 	{
+		CleanListeners();
 		FScopeLock Lock(&ListenerCriticalSection);
 		AkObstructionAndOcclusionService::ListenerMap ObsOccListenerMap;
 		for (auto& Listener : Listeners)
@@ -302,7 +324,7 @@ void UAkComponent::UpdateObstructionAndOcclusion()
 	}
 }
 
-void UAkComponent::PostTrigger(const UAkTrigger* TriggerValue, FString Trigger)
+void UAkComponent::PostTrigger(const UAkTrigger* TriggerValue)
 {
 	if (FAkAudioDevice::Get())
 	{
@@ -313,14 +335,10 @@ void UAkComponent::PostTrigger(const UAkTrigger* TriggerValue, FString Trigger)
 		{
 			SoundEngine->PostTrigger(TriggerValue->TriggerCookedData.TriggerId, GetAkGameObjectID());
 		}
-		else
-		{
-			SoundEngine->PostTrigger(TCHAR_TO_AK(*Trigger), GetAkGameObjectID());
-		}
 	}
 }
 
-void UAkComponent::SetSwitch(const UAkSwitchValue* SwitchValue, FString SwitchGroup, FString SwitchState)
+void UAkComponent::SetSwitch(const UAkSwitchValue* SwitchValue)
 {
 	if (FAkAudioDevice::Get())
 	{
@@ -330,13 +348,6 @@ void UAkComponent::SetSwitch(const UAkSwitchValue* SwitchValue, FString SwitchGr
 		if (SwitchValue)
 		{
 			SoundEngine->SetSwitch(SwitchValue->GroupValueCookedData.GroupId, SwitchValue->GroupValueCookedData.Id, GetAkGameObjectID());
-		}
-		else
-		{
-			uint32 SwitchGroupID = SoundEngine->GetIDFromString(TCHAR_TO_AK(*SwitchGroup));
-			uint32 SwitchStateID = SoundEngine->GetIDFromString(TCHAR_TO_AK(*SwitchState));
-
-			SoundEngine->SetSwitch(SwitchGroupID, SwitchStateID, GetAkGameObjectID());
 		}
 	}
 }
@@ -351,9 +362,9 @@ void UAkComponent::SetListeners(const TArray<UAkComponent*>& NewListeners)
 	auto AudioDevice = FAkAudioDevice::Get();
 	if (AudioDevice)
 	{
+		CleanListeners();
 		FScopeLock Lock(&ListenerCriticalSection);
 		bUseDefaultListeners = false;
-
 		for(auto& Listener : Listeners)
 		{
 			Listener->IsListener = false;
@@ -367,7 +378,6 @@ void UAkComponent::SetListeners(const TArray<UAkComponent*>& NewListeners)
 				Listeners.Add(AkComponent);
 			}
 		}
-		
 		for(auto& Listener : Listeners)
 		{
 			Listener->IsListener = true;
@@ -404,6 +414,7 @@ void UAkComponent::SetOutputBusVolume(float BusVolume)
 	FAkAudioDevice * AudioDevice = FAkAudioDevice::Get();
 	if (AudioDevice)
 	{
+		CleanListeners();
 		FScopeLock Lock(&ListenerCriticalSection);
 		for (auto It = Listeners.CreateIterator(); It; ++It)
 		{
@@ -415,7 +426,7 @@ void UAkComponent::SetOutputBusVolume(float BusVolume)
 void UAkComponent::OnRegister()
 {
 	UWorld* CurrentWorld = GetWorld();
-	if(!IsRegisteredWithWwise && CurrentWorld->WorldType != EWorldType::Inactive && CurrentWorld->WorldType != EWorldType::None)
+	if(!bIsRegisteredWithWwise && CurrentWorld->WorldType != EWorldType::Inactive && CurrentWorld->WorldType != EWorldType::None)
 		RegisterGameObject(); // Done before parent so that OnUpdateTransform follows registration and updates position correctly.
 
 	FAkAudioDevice* AudioDevice = FAkAudioDevice::Get();
@@ -426,7 +437,7 @@ void UAkComponent::OnRegister()
 
 	// It's possible for OnRegister to be called while the WorldType is inactive.
 	// The game object will be registered again later when the WorldType is active.
-	if (AudioDevice && IsRegisteredWithWwise)
+	if (AudioDevice && bIsRegisteredWithWwise)
 	{
 		if (EarlyReflectionAuxBus || !EarlyReflectionAuxBusName.IsEmpty())
 		{
@@ -468,7 +479,7 @@ void UAkComponent::OnUnregister()
 	// shot sounds.
 	AActor* Owner = GetOwner();
 	UWorld* CurrentWorld = GetWorld();
-	if( !Owner || !CurrentWorld || StopWhenOwnerDestroyed || CurrentWorld->bIsTearingDown || (Owner->GetClass() == APlayerController::StaticClass() && CurrentWorld->WorldType == EWorldType::PIE))
+	if( !Owner || !CurrentWorld || (StopWhenOwnerDestroyed && Owner->IsActorBeingDestroyed()) || CurrentWorld->bIsTearingDown || (Owner->GetClass() == APlayerController::StaticClass() && CurrentWorld->WorldType == EWorldType::PIE))
 	{
 		Stop();
 	}
@@ -574,6 +585,7 @@ void UAkComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FAct
 
 		if (World && AkAudioDevice && AkAudioDevice->ShouldNotifySoundEngine(World->WorldType))
 		{
+			CleanListeners();
 			FScopeLock Lock(&ListenerCriticalSection);
 			AkObstructionAndOcclusionService::ListenerMap ObsOccListenerMap;
 			for (auto& Listener : Listeners)
@@ -617,20 +629,14 @@ void UAkComponent::BeginPlay()
 	// If spawned inside AkReverbVolume(s), we do not want the fade in effect to kick in.
 	UpdateAkLateReverbComponentList(GetComponentLocation());
 	for (auto& ReverbFadeControl : ReverbFadeControls)
+	{
 		ReverbFadeControl.ForceCurrentToTargetValue();
+	}
 
-	SetAttenuationScalingFactor(AttenuationScalingFactor);
+	Super::SetAttenuationScalingFactor();
 
 	if (EnableSpotReflectors)
 		AAkSpotReflector::UpdateSpotReflectors(this);
-}
-
-void UAkComponent::SetAttenuationScalingFactor(float Value)
-{
-	AttenuationScalingFactor = Value;
-	FAkAudioDevice* AudioDevice = FAkAudioDevice::Get();
-	if (AudioDevice)
-		AudioDevice->SetAttenuationScalingFactor(this, AttenuationScalingFactor);
 }
 
 void UAkComponent::OnUpdateTransform(EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport)
@@ -700,10 +706,7 @@ void UAkComponent::RegisterGameObject()
 				Listeners.Add(Listener);
 			}
 		}
-
 		AkAudioDevice->RegisterComponent(this);
-		IsRegisteredWithWwise = true;
-
 		AkAudioDevice->SetGameObjectRadius(this, outerRadius, innerRadius);
 	}
 
@@ -716,7 +719,6 @@ void UAkComponent::UnregisterGameObject()
 	if (AkAudioDevice)
 	{
 		AkAudioDevice->UnregisterComponent(this);
-		IsRegisteredWithWwise = false;
 	}
 
 	if(IsListener)
@@ -820,7 +822,7 @@ void UAkComponent::UpdateGameObjectPosition()
 
 void UAkComponent::UpdateSpatialAudioRoom(FVector Location)
 {
-	if (!IsRegisteredWithWwise)
+	if (!bIsRegisteredWithWwise)
 	{
 		return;
 	}
@@ -1023,7 +1025,7 @@ void UAkComponent::SetGameObjectRadius(float in_outerRadius, float in_innerRadiu
 	outerRadius = in_outerRadius;
 	innerRadius = in_innerRadius;
 	FAkAudioDevice* AkAudioDevice = FAkAudioDevice::Get();
-	if (AkAudioDevice && IsRegisteredWithWwise)
+	if (AkAudioDevice && bIsRegisteredWithWwise)
 	{
 		AkAudioDevice->SetGameObjectRadius(this, outerRadius, innerRadius);
 	}
@@ -1050,7 +1052,9 @@ void UAkComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChanged
 			PropertyChangedEvent.ChangeType == EPropertyChangeType::ValueSet)
 		{
 			if (innerRadius > outerRadius)
+			{
 				innerRadius = outerRadius;
+			}
 
 			SetGameObjectRadius(outerRadius, innerRadius);
 		}

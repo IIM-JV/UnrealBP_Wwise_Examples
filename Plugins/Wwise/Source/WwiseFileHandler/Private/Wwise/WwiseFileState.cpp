@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/WwiseFileState.h"
@@ -20,6 +20,8 @@ Copyright (c) 2024 Audiokinetic Inc.
 
 #include <inttypes.h>
 
+#include "Wwise/WwiseConcurrencyModule.h"
+#include "Wwise/WwiseFileHandlerModule.h"
 #include "Wwise/WwiseGlobalCallbacks.h"
 #include "Wwise/WwiseStreamableFileStateInfo.h"
 
@@ -30,6 +32,17 @@ FWwiseFileState::~FWwiseFileState()
 	UE_CLOG(FileStateExecutionQueue, LogWwiseFileHandler, Error, TEXT("Dtor FWwiseFileState %p without closing the execution queue!"), this);
 	UE_CLOG(LoadCount > 0, LogWwiseFileHandler, Error, TEXT("Dtor FWwiseFileState %p with LoadCount still active!"), this);
 	UE_CLOG(State != EState::Closed, LogWwiseFileHandler, Error, TEXT("Dtor FWwiseFileState %p with State %s not closed!"), this, GetStateName());
+}
+
+FWwiseExecutionQueue* FWwiseFileState::GetBankExecutionQueue()
+{
+	auto* FileHandlerModule = IWwiseFileHandlerModule::GetModule();
+	if (UNLIKELY(!FileHandlerModule))
+	{
+		UE_LOG(LogWwiseFileHandler, Log, TEXT("FWwiseFileState::GetBankExecutionQueue: WwiseFileHandlerModule is unloaded."));
+		return nullptr;
+	}
+	return FileHandlerModule->GetBankExecutionQueue();
 }
 
 const TCHAR* FWwiseFileState::GetStateNameFor(EState State)
@@ -848,6 +861,13 @@ void FWwiseFileState::AsyncOp(const TCHAR* InDebugName, FBasicFunction&& Fct)
 	if (UNLIKELY(!FileStateExecutionQueue))
 	{
 		UE_LOG(LogWwiseFileHandler, Error, TEXT("FWwiseFileState::AsyncOp %s %" PRIu32 ": Doing async op on terminated state"), GetManagingTypeName(), GetShortId());
+		if (auto* Module = IWwiseConcurrencyModule::GetModule())
+		{
+			if (auto* DefaultQueue = Module->GetDefaultQueue())
+			{
+				return DefaultQueue->Async(InDebugName, MoveTemp(Fct));
+			}
+		}
 		return Fct();
 	}
 	FileStateExecutionQueue->Async(InDebugName, MoveTemp(Fct));

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -68,7 +68,7 @@ public:
 		FWwiseLocalizedEventCookedData EventCookedData;
 
 	UPROPERTY(meta = (DeprecatedProperty, DeprecationMessage = "Used for migration"))
-		UAkAudioBank* RequiredBank_DEPRECATED = nullptr;
+		TObjectPtr<UAkAudioBank> RequiredBank_DEPRECATED = nullptr;
 
 public:
 	/**
@@ -375,7 +375,13 @@ public:
 private:
 	void OnBeginPIE(const bool bIsSimulating);
 	FDelegateHandle OnBeginPIEDelegateHandle;
+#endif // WITH_EDITOR
+
+#if WITH_EDITORONLY_DATA && UE_5_5_OR_LATER
+public:
+	virtual void PreSave(FObjectPreSaveContext SaveContext) override;
 #endif
+
 #if WITH_EDITORONLY_DATA
 public:
 	virtual void FillInfo() override;

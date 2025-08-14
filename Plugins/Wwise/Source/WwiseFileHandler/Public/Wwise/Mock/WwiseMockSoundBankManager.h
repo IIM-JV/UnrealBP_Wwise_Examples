@@ -12,12 +12,11 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 
-#include "AkInclude.h"
 #include "WwiseMockFileState.h"
 #include "Wwise/WwiseFileHandlerBase.h"
 #include "Wwise/WwiseSoundBankManager.h"
@@ -32,24 +31,31 @@ public:
 
 	const TCHAR* GetManagingTypeName() const override { return TEXT("MockSoundBank"); }
 
-	void LoadSoundBank(const FWwiseSoundBankCookedData& InSoundBankCookedData, const FString& InRootPath, FLoadSoundBankCallback&& InCallback)
+	void LoadSoundBank(const FWwiseSoundBankCookedData& InSoundBankCookedData, FLoadSoundBankCallback&& InCallback)
 	{
 		SCOPED_WWISEFILEHANDLER_EVENT_4(TEXT("FWwiseMockSoundBankManager::LoadSoundBank"));
-		IncrementFileStateUseAsync(InSoundBankCookedData.SoundBankId, EWwiseFileStateOperationOrigin::Loading, [this, InSoundBankCookedData, InRootPath]() mutable
+		IncrementFileStateUseAsync(InSoundBankCookedData.SoundBankId, EWwiseFileStateOperationOrigin::Loading, [WeakThis=AsWeak(), InSoundBankCookedData, this]() mutable
 		{
-			return CreateOp(InSoundBankCookedData, InRootPath);
+			auto SharedMockSoundBankManager = StaticCastSharedPtr<FWwiseMockSoundBankManager>(WeakThis.Pin());
+			if (!SharedMockSoundBankManager.IsValid())
+			{
+				UE_LOG(LogWwiseFileHandler, Error,
+				       TEXT("FWwiseMockSoundBankManager::LoadSoundBank CreateOp Callback: Failed to get Mock SoundBankManager"))
+				return FWwiseFileStateSharedPtr(nullptr);
+			}
+			return SharedMockSoundBankManager->CreateOp(InSoundBankCookedData);
 		}, [InCallback = MoveTemp(InCallback)](const FWwiseFileStateSharedPtr, bool bInResult)
 		{
 			InCallback(bInResult);
 		});
 	}
 
-	void UnloadSoundBank(const FWwiseSoundBankCookedData& InSoundBankCookedData, const FString& InRootPath, FUnloadSoundBankCallback&& InCallback)
+	void UnloadSoundBank(const FWwiseSoundBankCookedData& InSoundBankCookedData, FUnloadSoundBankCallback&& InCallback)
 	{
 		SCOPED_WWISEFILEHANDLER_EVENT_4(TEXT("FWwiseMockSoundBankManager::UnloadSoundBank"));
 		DecrementFileStateUseAsync(InSoundBankCookedData.SoundBankId, nullptr, EWwiseFileStateOperationOrigin::Loading, MoveTemp(InCallback));
 	}
-	void SetGranularity(AkUInt32 InStreamingGranularity) override {}
+	void SetGranularity(uint32 InStreamingGranularity) override {}
 
 	IWwiseStreamingManagerHooks& GetStreamingHooks() override final { return *this; }
 
@@ -61,7 +67,7 @@ public:
 	}
 
 protected:
-	virtual FWwiseFileStateSharedPtr CreateOp(const FWwiseSoundBankCookedData& InSoundBankCookedData, const FString& InRootPath)
+	virtual FWwiseFileStateSharedPtr CreateOp(const FWwiseSoundBankCookedData& InSoundBankCookedData)
 	{
 		auto* FileState = new FWwiseMockFileState(InSoundBankCookedData.SoundBankId);
 		FileState->bIsStreamedState = FWwiseMockFileState::OptionalBool::False;

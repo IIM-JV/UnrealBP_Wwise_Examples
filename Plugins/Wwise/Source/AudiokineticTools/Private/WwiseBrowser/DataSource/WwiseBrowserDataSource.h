@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2024 Audiokinetic Inc.
+Copyright (c) 2025 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -54,6 +54,7 @@ enum EUAssetStatusFilter
 enum EWwiseTypeFilter
 {
 	AcousticTexture,
+	AudioDeviceShareSet,
 	Effects,
 	Events,
 	GameParameters,
@@ -140,9 +141,10 @@ public:
 	void CreateProjectDBItem(const FWwiseTreeItemPtr& TreeItemRootSoundBank, FWwiseTreeItemPtr& TreeItemRootDst);
 	void CreateWaapiExclusiveItem(const FWwiseTreeItemPtr& WaapiItem, FWwiseTreeItemPtr& TreeItemRootDst);
 	void CreateWaapiItem(const FWwiseTreeItemPtr& TreeItemRootWwise, FWwiseTreeItemPtr& TreeItemRootDst);
+	bool IsMoved(FWwiseTreeItemPtr CurrItem);
 private:
 
-	void MergeDataSources(bool bGenerateUAssetsInfo = true);
+	void MergeDataSources();
 
 	bool bIsDirty = false;
 
@@ -179,8 +181,9 @@ private:
 
 	void SetupAssetCallbacks();
 	void OnFilesFullyLoaded();
+	// Timer to debounce updates from the Asset Registry
 	void OnTimerTick(float DeltaSeconds);
-	
+
 	void OnUAssetSourceRefresh(const FAssetData& RemovedAssetData);
 
 	void OnUAssetSourceRefresh(const FAssetData& RemovedAssetData, const FString& OldPath);
