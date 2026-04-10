@@ -59,6 +59,10 @@ Plugins/WwiseNiagara/**/*.pdb
 !Plugins/WwiseNiagara/Binaries/*
 !Plugins/WwiseNiagara/Binaries/Win64/*.dll
 !Plugins/WwiseNiagara/Binaries/Mac/*.dylib
+!Plugins/WwiseSoundEngine/Binaries/*
+!Plugins/WwiseSoundEngine/Binaries/Win64/*.dll
+!Plugins/WwiseSoundEngine/Binaries/Mac/*.dylib
+
 
 # Builds
 Build/*
