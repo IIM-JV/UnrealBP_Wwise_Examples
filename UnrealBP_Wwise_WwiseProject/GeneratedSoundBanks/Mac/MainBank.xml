@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <SoundBanksInfo Platform="Mac" BasePlatform="Mac" SchemaVersion="16" SoundBankVersion="172">
 	<SoundBanks>
-		<SoundBank Id="2880737896" Type="User" GUID="{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}" Language="SFX" Hash="{713B29F6-BA73-EF13-8AFC-FAE4BA8E2666}">
+		<SoundBank Id="2880737896" Type="User" GUID="{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}" Language="SFX" Hash="{9BCE1342-DA1B-DA46-1B74-A20C5C1152DD}">
 			<ObjectPath>\SoundBanks\Default Work Unit\MainBank</ObjectPath>
 			<ShortName>MainBank</ShortName>
 			<Path>MainBank.bnk</Path>
@@ -72,7 +72,7 @@
 				<Event Id="506685731" Name="PlayFootstepEvent" ObjectPath="\Events\Default Work Unit\MainEvents\PlayFootstepEvent" GUID="{4E6FB371-75D2-4EFA-9179-E2B72479D446}" DurationType="OneShot" DurationMin="0.1684094" DurationMax="0.9332505">
 					<SwitchContainers>
 						<SwitchContainer>
-							<SwitchValue GroupType="Switch" GroupId="4203814010" Id="2195636714" GUID="{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}"/>
+							<SwitchValue GroupType="Switch" GroupId="4203814010" Id="2195636714" GUID="{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}" Default="true"/>
 							<MediaRefs>
 								<MediaRef Id="82484177"/>
 							</MediaRefs>
@@ -159,5 +159,5 @@
 			</SwitchGroups>
 		</SoundBank>
 	</SoundBanks>
-	<FileHash>{5BF8F611-49E6-B851-9BE6-EE32BFA6155B}</FileHash>
+	<FileHash>{BDB2553E-9FAC-F5A6-047C-683FACE517C5}</FileHash>
 </SoundBanksInfo>

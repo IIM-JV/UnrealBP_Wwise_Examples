@@ -132,7 +132,7 @@
     "Type": "User",
     "GUID": "{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}",
     "Language": "SFX",
-    "Hash": "{713B29F6-BA73-EF13-8AFC-FAE4BA8E2666}",
+    "Hash": "{9BCE1342-DA1B-DA46-1B74-A20C5C1152DD}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\MainBank",
     "ShortName": "MainBank",
     "Path": "MainBank.bnk",
@@ -279,7 +279,8 @@
          "GroupType": "Switch",
          "GroupId": "4203814010",
          "Id": "2195636714",
-         "GUID": "{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}"
+         "GUID": "{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}",
+         "Default": "true"
         },
         "MediaRefs": [
          {
@@ -495,6 +496,6 @@
     ]
    }
   ],
-  "FileHash": "{5C247D49-FD14-10D0-E39E-98FB3023EAFD}"
+  "FileHash": "{0F4C9E5D-1B1A-00C7-98F2-75D572885030}"
  }
 }

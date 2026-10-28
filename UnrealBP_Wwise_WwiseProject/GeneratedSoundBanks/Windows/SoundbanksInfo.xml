@@ -46,7 +46,7 @@
 				</SwitchGroup>
 			</SwitchGroups>
 		</SoundBank>
-		<SoundBank Id="2880737896" Type="User" GUID="{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}" Language="SFX" Hash="{713B29F6-BA73-EF13-8AFC-FAE4BA8E2666}">
+		<SoundBank Id="2880737896" Type="User" GUID="{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}" Language="SFX" Hash="{9BCE1342-DA1B-DA46-1B74-A20C5C1152DD}">
 			<ObjectPath>\SoundBanks\Default Work Unit\MainBank</ObjectPath>
 			<ShortName>MainBank</ShortName>
 			<Path>MainBank.bnk</Path>
@@ -117,7 +117,7 @@
 				<Event Id="506685731" Name="PlayFootstepEvent" ObjectPath="\Events\Default Work Unit\MainEvents\PlayFootstepEvent" GUID="{4E6FB371-75D2-4EFA-9179-E2B72479D446}" DurationType="OneShot" DurationMin="0.1684094" DurationMax="0.9332505">
 					<SwitchContainers>
 						<SwitchContainer>
-							<SwitchValue GroupType="Switch" GroupId="4203814010" Id="2195636714" GUID="{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}"/>
+							<SwitchValue GroupType="Switch" GroupId="4203814010" Id="2195636714" GUID="{22A7B51B-B0DC-445E-BF41-D2E76CF47C7F}" Default="true"/>
 							<MediaRefs>
 								<MediaRef Id="82484177"/>
 							</MediaRefs>
@@ -204,5 +204,5 @@
 			</SwitchGroups>
 		</SoundBank>
 	</SoundBanks>
-	<FileHash>{42951FB5-4C0D-B24A-8B11-14AE1739CA5B}</FileHash>
+	<FileHash>{9421CDC0-4812-D096-B1B7-2C6275ABFC60}</FileHash>
 </SoundBanksInfo>
