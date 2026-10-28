@@ -12,10 +12,12 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/WwiseProjectDatabaseModuleImpl.h"
+
+#include <atomic>
 
 #include "Wwise/WwiseProjectDatabaseDelegates.h"
 #include "Wwise/WwiseProjectDatabaseImpl.h"
@@ -27,6 +29,17 @@ IMPLEMENT_MODULE(FWwiseProjectDatabaseModule, WwiseProjectDatabase)
 FWwiseProjectDatabase* FWwiseProjectDatabaseModule::GetProjectDatabase()
 {
 	SCOPED_WWISEPROJECTDATABASE_EVENT(TEXT("GetProjectDatabase"));
+
+	if (UNLIKELY(IsEngineExitRequested()))
+	{
+		static std::atomic<bool> bHasLoggedShutdownWarning{ false };
+		if (!bHasLoggedShutdownWarning.exchange(true, std::memory_order_relaxed))
+		{
+			WWISE_DB_LOG(Warning, "GetProjectDatabase called during engine shutdown - returning nullptr");
+		}
+		return nullptr;
+	}
+
 	Lock.ReadLock();
 	if (LIKELY(ProjectDatabase))
 	{
@@ -83,6 +96,7 @@ FWwiseProjectDatabaseDelegates* FWwiseProjectDatabaseModule::InstantiateProjectD
 void FWwiseProjectDatabaseModule::ShutdownModule()
 {
 	SCOPED_WWISEPROJECTDATABASE_EVENT(TEXT("ShutdownModule"));
+	bIsShuttingDown = true;
 	Lock.WriteLock();
 	if (ProjectDatabase.IsValid())
 	{

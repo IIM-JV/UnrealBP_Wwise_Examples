@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/API_2024_1/Platforms/TVOS/TVOSAPI_2024_1.h"
@@ -20,8 +20,8 @@ Copyright (c) 2025 Audiokinetic Inc.
 
 #if defined(PLATFORM_TVOS) && PLATFORM_TVOS
 
-#if !defined(__has_include) || __has_include("Generated/AkTVOSPlugins.h")
-#include "Generated/AkTVOSPlugins.h"
+#if !defined(__has_include) || __has_include("Generated/AktvOSPlugins.h")
+#include "Generated/AktvOSPlugins.h"
 #endif
 
 void FWwisePlatformAPI_2024_1_TVOS::ChangeAudioSessionProperties(

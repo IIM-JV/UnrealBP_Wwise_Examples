@@ -12,23 +12,47 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/WwiseReconcile.h"
+
+#include "AkUnrealAssetDataHelper.h"
+#include "AssetViewUtils.h"
 #include "Wwise/Stats/Reconcile.h"
 #include "AssetRegistry/AssetData.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/App.h"
+#include "Misc/EngineBuildSettings.h"
 #include "Misc/ScopedSlowTask.h"
+#include "Misc/EnumClassFlags.h"
+#include "ObjectTools.h"
 
 #define LOCTEXT_NAMESPACE "AkAudio"
+
+bool IWwiseReconcile::UAssetExists(const WwiseAnyRef* WwiseRef) const
+{
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	auto AssetPackagePath = GetAssetPackagePath(*WwiseRef);
+	FAssetData Asset = AssetRegistryModule.GetRegistry().GetAssetByObjectPath(AssetPackagePath / AkUnrealAssetDataHelper::GetAssetDefaultName(WwiseRef).ToString() + "." + AkUnrealAssetDataHelper::GetAssetDefaultName(WwiseRef).ToString());
+	return Asset.IsValid();
+}
+
+bool IWwiseReconcile::IsPathTooLong(const WwiseAnyRef* WwiseRef) const
+{
+	FName AssetName = AkUnrealAssetDataHelper::GetAssetDefaultName(WwiseRef);
+	FString AssetPackagePath = IWwiseReconcile::Get()->GetAssetPackagePath(*WwiseRef);
+	int PackageLength = AssetViewUtils::GetPackageLengthForCooking(AssetPackagePath / AssetName.ToString(), FEngineBuildSettings::IsInternalBuild());
+	int MaxPath = AssetViewUtils::GetMaxCookPathLen();
+	return PackageLength > MaxPath || PackageLength >= NAME_SIZE;
+}
 
 bool IWwiseReconcile::ReconcileAssets(EWwiseReconcileOperationFlags OperationFlags)
 {
 	FScopedSlowTask ReconcileTask(GetNumberOfAssets(), LOCTEXT("ReconcileTask", "Reconciling Wwise Assets"));
 	if(FApp::CanEverRender())
 	{
-		ReconcileTask.MakeDialog(true);		
+		ReconcileTask.MakeDialog(true);
 	}
 	auto ProjectDatabase = FWwiseProjectDatabase::Get();
 	if (UNLIKELY(!ProjectDatabase))
@@ -50,7 +74,8 @@ bool IWwiseReconcile::ReconcileAssets(EWwiseReconcileOperationFlags OperationFla
 
 	if (AssetsToDelete.Num() != 0)
 	{
-		int NumberOfAssetsDeleted = DeleteAssets(ReconcileTask);
+		bool bForceDelete = (OperationFlags & EWwiseReconcileOperationFlags::ForceDelete) == EWwiseReconcileOperationFlags::ForceDelete;
+		int NumberOfAssetsDeleted = DeleteAssets(ReconcileTask, bForceDelete);
 		NumberOfOperationsCompleted += NumberOfAssetsDeleted;
 		if (NumberOfAssetsDeleted > 0 && !ReconcileTask.ShouldCancel())
 		{
@@ -135,3 +160,29 @@ bool IWwiseReconcile::ReconcileAssets(EWwiseReconcileOperationFlags OperationFla
 	return bSucceeded;
 }
 #undef LOCTEXT
+
+bool FWwiseReconcileItem::CheckForAssetReference()
+{
+	// Check if the object is referenced in memory
+	if (EnumHasAllFlags(OperationRequired, EWwiseReconcileOperationFlags::Delete))
+	{
+		bool bReferenced = false;
+		bool bReferencedByUndo = false;
+		ObjectTools::GatherObjectReferencersForDeletion(Asset.GetAsset(), bReferenced, bReferencedByUndo);
+
+		if (bReferenced || bReferencedByUndo)
+		{
+			bIsAssetReferenced = true;
+			return bIsAssetReferenced;
+		}
+		// If not, then check if referenced on disk
+		IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
+		TArray<FName> referencers;
+		AssetRegistry.GetReferencers(FName(Asset.PackageName), referencers);
+
+		bIsAssetReferenced = referencers.Num() > 0;
+		return bIsAssetReferenced;
+	}
+	bIsAssetReferenced = false;
+	return bIsAssetReferenced;
+}

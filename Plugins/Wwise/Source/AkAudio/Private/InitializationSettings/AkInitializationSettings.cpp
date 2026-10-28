@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "InitializationSettings/AkInitializationSettings.h"
@@ -20,6 +20,7 @@ Copyright (c) 2025 Audiokinetic Inc.
 #include "Platforms/AkUEPlatform.h"
 #include "HAL/PlatformMemory.h"
 #include "Misc/App.h"
+#include "Misc/StringBuilder.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "ProfilingDebugging/MiscTrace.h"
 
@@ -29,7 +30,6 @@ Copyright (c) 2025 Audiokinetic Inc.
 #include "Wwise/API/WwiseCommAPI.h"
 #include "Wwise/API/WwiseMemoryMgrAPI.h"
 #include "Wwise/API/WwiseMonitorAPI.h"
-#include "Wwise/API/WwiseMusicEngineAPI.h"
 #include "Wwise/API/WwiseSoundEngineAPI.h"
 #include "Wwise/API/WwiseSpatialAudioAPI.h"
 #include "Wwise/API/WwiseStreamMgrAPI.h"
@@ -103,24 +103,27 @@ namespace AkInitializationSettings_Helpers
 		}
 	}
 #endif
+	static constexpr ANSICHAR ProfilerTimerNamePrefix[] = "WwiseSoundEngine ";
+	static constexpr int32 MaxProfilerTimerNameLength = 128;
+	static constexpr int32 MaxProfilerTimerZoneLength = MaxProfilerTimerNameLength - UE_ARRAY_COUNT(ProfilerTimerNamePrefix);
+
 	void AkProfilerPushTimer(AkPluginID in_uPluginID, const char* in_pszZoneName)
 	{
-		if (!in_pszZoneName)
+		TAnsiStringBuilder<MaxProfilerTimerNameLength> Name;
+		Name << ProfilerTimerNamePrefix;
+		if (in_pszZoneName)
 		{
-			in_pszZoneName = "(Unknown)";
+			Name.Append(in_pszZoneName, FPlatformString::Strnlen(in_pszZoneName, MaxProfilerTimerZoneLength));
 		}
-
-		auto Name = FString(in_pszZoneName);
-		Name = FString(TEXT("WwiseSoundEngine ")) + Name;
+		else
+		{
+			Name.Appendf("(Unknown 0x%08X)", in_uPluginID);
+		}
 
 #if CPUPROFILERTRACE_ENABLED
 		FCpuProfilerTrace::OutputBeginDynamicEvent(*Name);
 #endif
-#if PLATFORM_IMPLEMENTS_BeginNamedEventStatic
-		FPlatformMisc::BeginNamedEventStatic(WwiseNamedEvents::Color1, *Name);
-#else
 		FPlatformMisc::BeginNamedEvent(WwiseNamedEvents::Color1, *Name);
-#endif
 	}
 
 	void AkProfilerPopTimer()
@@ -149,10 +152,9 @@ FAkInitializationStructure::FAkInitializationStructure()
 {
 	auto* Comm = IWwiseCommAPI::Get();
 	auto* MemoryMgr = IWwiseMemoryMgrAPI::Get();
-	auto* MusicEngine = IWwiseMusicEngineAPI::Get();
 	auto* SoundEngine = IWwiseSoundEngineAPI::Get();
 	auto* StreamMgr = IWwiseStreamMgrAPI::Get();
-	if (UNLIKELY(!Comm || !MemoryMgr || !MusicEngine || !SoundEngine || !StreamMgr)) return;
+	if (UNLIKELY(!Comm || !MemoryMgr || !SoundEngine || !StreamMgr)) return;
 
 	// Set up all of the memory settings
 	MemoryMgr->GetDefaultSettings(MemSettings);
@@ -190,9 +192,8 @@ FAkInitializationStructure::FAkInitializationStructure()
 	DeviceSettings.uMaxConcurrentIO = AK_UNREAL_MAX_CONCURRENT_IO;
 
 	SoundEngine->GetDefaultInitSettings(InitSettings);
-#ifdef AK_ENABLE_ASSERTS
-	InitSettings.pfnAssertHook = WwiseAssertHook;
-#endif
+	SoundEngine->SetAssertHook(WwiseAssertHook);
+
 	InitSettings.eFloorPlane = AkFloorPlane_XY;
 	InitSettings.fGameUnitsToMeters = 100.f;
 	InitSettings.fnProfilerPushTimer = AkInitializationSettings_Helpers::AkProfilerPushTimer;
@@ -202,8 +203,6 @@ FAkInitializationStructure::FAkInitializationStructure()
 	InitSettings.bUseSoundBankMgrThread = !!AK_ENABLE_BANK_MGR_THREAD;
 	
 	SoundEngine->GetDefaultPlatformInitSettings(PlatformInitSettings);
-
-	MusicEngine->GetDefaultInitSettings(MusicSettings);
 
 #if AK_ENABLE_COMMUNICATION
 	Comm->GetDefaultInitSettings(CommSettings);
@@ -289,6 +288,12 @@ void FAkSpatialAudioSettings::FillInitializationStructure(FAkInitializationStruc
 	SpatialAudioInitSettings.fSmoothingConstantMs = SmoothingConstantMs;
 	SpatialAudioInitSettings.uMaxDiffractionPaths = MaxDiffractionPaths;
 	SpatialAudioInitSettings.uMaxGlobalReflectionPaths = MaxGlobalReflectionPaths;
+#if WWISE_2025_1_OR_LATER
+	SpatialAudioInitSettings.uClusteringMinPoints = ClusteringMinPoints;
+	SpatialAudioInitSettings.fClusteringMaxDistance = ClusteringMaxDistance;
+	SpatialAudioInitSettings.fClusteringDeadZoneDistance = ClusteringDeadZoneDistance;
+	SpatialAudioInitSettings.fAdjacentRoomBleed = AdjacentRoomBleed;
+#endif
 #endif
 }
 
@@ -304,7 +309,7 @@ void FAkCommunicationSettings::FillInitializationStructure(FAkInitializationStru
 	CommSettings.ports.uCommand = CommandPort;
 
 	const FString GameName = GetCommsNetworkName();
-	FCStringAnsi::Strcpy(CommSettings.szAppNetworkName, AK_COMM_SETTINGS_MAX_STRING_SIZE, TCHAR_TO_ANSI(*GameName));
+	FCStringAnsi::Strncpy(CommSettings.szAppNetworkName, TCHAR_TO_ANSI(*GameName), AK_COMM_SETTINGS_MAX_STRING_SIZE);
 #endif
 }
 
@@ -368,7 +373,7 @@ void FAkCommonInitializationSettings::FillInitializationStructure(FAkInitializat
 	
 	MemoryArenaSettings.FillInitializationStructure(InitializationStructure);
 
-	InitializationStructure.MusicSettings.fStreamingLookAheadRatio = StreamingLookAheadRatio;
+	InitSettings.fStreamingLookAheadRatio = StreamingLookAheadRatio;
 }
 
 
@@ -474,7 +479,6 @@ namespace FAkSoundEngineInitialization
 		auto* Comm = IWwiseCommAPI::Get();
 		auto* MemoryMgr = IWwiseMemoryMgrAPI::Get();
 		auto* Monitor = IWwiseMonitorAPI::Get();
-		auto* MusicEngine = IWwiseMusicEngineAPI::Get();
 		auto* SoundEngine = IWwiseSoundEngineAPI::Get();
 		auto* SpatialAudio = IWwiseSpatialAudioAPI::Get();
 		auto* StreamMgr = IWwiseStreamMgrAPI::Get();
@@ -528,13 +532,6 @@ namespace FAkSoundEngineInitialization
 			return false;
 		}
 
-		UE_CLOG(AkInitializationSettings_Helpers::IsLoggingInitialization, LogAkAudio, Verbose, TEXT("Initializing Music Engine"));
-		if (UNLIKELY(!MusicEngine) || MusicEngine->Init(&InitializationStructure.MusicSettings) != AK_Success)
-		{
-			UE_LOG(LogAkAudio, Error, TEXT("Failed to initialize AK::MusicEngine."));
-			return false;
-		}
-
 		UE_CLOG(AkInitializationSettings_Helpers::IsLoggingInitialization, LogAkAudio, Verbose, TEXT("Initializing Spatial Audio"));
 		if (UNLIKELY(!SpatialAudio) || SpatialAudio->Init(InitializationStructure.SpatialAudioInitSettings) != AK_Success)
 		{
@@ -562,7 +559,6 @@ namespace FAkSoundEngineInitialization
 		auto* Comm = IWwiseCommAPI::Get();
 		auto* MemoryMgr = IWwiseMemoryMgrAPI::Get();
 		auto* Monitor = IWwiseMonitorAPI::Get();
-		auto* MusicEngine = IWwiseMusicEngineAPI::Get();
 		auto* SoundEngine = IWwiseSoundEngineAPI::Get();
 		auto* StreamMgr = IWwiseStreamMgrAPI::GetAkStreamMgr();
 
@@ -575,12 +571,6 @@ namespace FAkSoundEngineInitialization
 #endif
 
 		// Note: No Spatial Audio Term
-
-		if (LIKELY(MusicEngine))
-		{
-			UE_CLOG(AkInitializationSettings_Helpers::IsLoggingInitialization, LogAkAudio, Verbose, TEXT("Terminating Music Engine"));
-			MusicEngine->Term();
-		}
 
 		if (LIKELY(SoundEngine && SoundEngine->IsInitialized()))
 		{

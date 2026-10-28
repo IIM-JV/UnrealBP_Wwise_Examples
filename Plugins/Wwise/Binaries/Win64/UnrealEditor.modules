@@ -1,9 +1,8 @@
 {
-	"BuildId": "37670630",
+	"BuildId": "55116800",
 	"Modules": 
 	{
 		"AkAudio": "UnrealEditor-AkAudio.dll",
-		"AkAudioMixer": "UnrealEditor-AkAudioMixer.dll",
 		"AudiokineticTools": "UnrealEditor-AudiokineticTools.dll",
 		"Wwise": "UnrealEditor-Wwise.dll",
 		"WwiseAudioLinkEditor": "UnrealEditor-WwiseAudioLinkEditor.dll",

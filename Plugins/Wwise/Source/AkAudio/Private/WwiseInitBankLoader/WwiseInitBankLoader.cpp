@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "WwiseInitBankLoader/WwiseInitBankLoader.h"
@@ -43,6 +43,20 @@ FWwiseInitBankLoader* FWwiseInitBankLoader::Get()
 
 FWwiseInitBankLoader::FWwiseInitBankLoader()
 {
+}
+
+FWwiseInitBankLoader::~FWwiseInitBankLoader()
+{
+#if WITH_EDITORONLY_DATA
+	if (PostInitDelegate.IsValid())
+	{
+#if UE_5_8_OR_LATER
+		FCoreDelegates::GetOnPostEngineInit().Remove(PostInitDelegate);
+#else
+		FCoreDelegates::OnPostEngineInit.Remove(PostInitDelegate);
+#endif
+	}
+#endif
 }
 
 #if WITH_EDITORONLY_DATA
@@ -78,7 +92,11 @@ void FWwiseInitBankLoader::UpdateInitBankInSettings()
 		const ELoadingPhase::Type CurrentPhase = IPluginManager::Get().GetLastCompletedLoadingPhase();
 		if (CurrentPhase == ELoadingPhase::None || CurrentPhase < ELoadingPhase::PostEngineInit)
 		{
+#if UE_5_8_OR_LATER
+			PostInitDelegate = FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &FWwiseInitBankLoader::OnPostInitSavePackage);
+#else
 			PostInitDelegate = FCoreDelegates::OnPostEngineInit.AddRaw(this, &FWwiseInitBankLoader::OnPostInitSavePackage);
+#endif
 		}
 		else
 		{
@@ -88,7 +106,6 @@ void FWwiseInitBankLoader::UpdateInitBankInSettings()
 	}
 }
 #endif
-
 
 void FWwiseInitBankLoader::LoadInitBank() const
 {

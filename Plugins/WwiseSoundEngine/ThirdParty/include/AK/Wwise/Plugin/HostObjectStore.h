@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /**
@@ -49,10 +49,10 @@ the specific language governing permissions and limitations under the License.
  * 
  * You can define as many named lists as required. You should consider creating different inner property sets or
  * lists for each platform if the property set indexes aren't linked.
- * 
- * You can create new inner property set with \ref CreatePropertySet, and insert it in a list's index with
- * \ref InsertPropertySet.
- * 
+ *
+ * You can create new inner property set with \ref ak_wwise_plugin_host_object_store_v1::CreatePropertySet, and insert it in a list's index with
+ * \ref ak_wwise_plugin_host_object_store_v1::InsertPropertySet.
+ *
  * You can also subscribe to notifications through ak_wwise_plugin_notifications_object_store_v1 in order to be
  * informed when some inner property set changed.
  * 
@@ -406,8 +406,8 @@ namespace AK::Wwise::Plugin
 
 			/**
 			 * \brief Inserts an inner property set into the specified list at the specified position.
-			 * 
-			 * To create a new inner property set, use \ref CreatePropertySet . You can then insert
+			 *
+			 * To create a new inner property set, use \ref ak_wwise_plugin_host_object_store_v1::CreatePropertySet . You can then insert
 			 * that particular inner property set in the named list <code>in_pszListName</code>, at the
 			 * <code>in_uiIndex</code> position, so it will be stored in the project data. Existing object positions
 			 * equal to or higher than <code>in_uiIndex</code> will be incremented as required.
@@ -424,7 +424,7 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \akwarning
 			 * 		Never reuse the same inner property set under two different indexes or lists. If you are
-			 * 		uncertain, or if you want to move it elsewhere, use \ref RemovePropertySet before
+			 * 		uncertain, or if you want to move it elsewhere, use \ref ak_wwise_plugin_host_object_store_v1::RemovePropertySet before
 			 * 		inserting it elsewhere.
 			 * \endakwarning
 			 * 
@@ -437,7 +437,7 @@ namespace AK::Wwise::Plugin
 			 *            object count in that list, will add a new index. Otherwise, increments previous object's
 			 * 			  indexes to make room for this new inner property set.
 			 * \param[in] in_propertySet The inner property set to include in the list's index. This property set
-			 * 			  must be created with \ref CreatePropertySet and not used elsewhere.
+			 * 			  must be created with \ref AK::Wwise::Plugin::V1::ObjectStore::CreatePropertySet and not used elsewhere.
 			 */
 			inline void InsertPropertySet(
 				const char * in_pszListName,
@@ -455,11 +455,11 @@ namespace AK::Wwise::Plugin
 			 * list or index.
 			 * 
 			 * If a list doesn't contain any items anymore, the list will automatically be deleted.
-			 * 
-			 * The function \ref DeletePropertySet must be used if you still keep that reference without being
-			 * reinserted through \ref InsertPropertySet. For normal deletion, you should execute
-			 * \ref DeletePropertySet function directly, and it will remove any usage automatically.
-			 * 
+			 *
+			 * The function \ref ak_wwise_plugin_host_object_store_v1::DeletePropertySet must be used if you still keep that reference without being
+			 * reinserted through \ref ak_wwise_plugin_host_object_store_v1::InsertPropertySet. For normal deletion, you should execute
+			 * \ref ak_wwise_plugin_host_object_store_v1::DeletePropertySet function directly, and it will remove any usage automatically.
+			 *
 			 * \sa
 			 * - \ref ak_wwise_plugin_notifications_object_store_v1::NotifyInnerObjectAddedRemoved
 			 * 
@@ -478,8 +478,8 @@ namespace AK::Wwise::Plugin
 			 * \brief Gets an inner property set inside the specified list at the specified position.
 			 * 
 			 * Wwise Authoring handles the object's lifetime as long as it's inserted. You should not call
-			 * \ref DeletePropertySet unless you want to remove it from your plug-in instance's objects.
-			 * 
+			 * \ref ak_wwise_plugin_host_object_store_v1::DeletePropertySet unless you want to remove it from your plug-in instance's objects.
+			 *
 			 * \aknote
 			 * 		In order to manage property sets, you must make sure to use
 			 * 		\ref AK::Wwise::Plugin::RequestPropertySet.
@@ -523,7 +523,7 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * When this object is created, it is not bound to any list. As such, this is the only moment
 			 * where it is under the plug-in's responsibility. You should either call
-			 * \ref InsertPropertySet or \ref DeletePropertySet on it to make sure the plug-in doesn't cause
+			 * \ref ak_wwise_plugin_host_object_store_v1::InsertPropertySet or \ref ak_wwise_plugin_host_object_store_v1::DeletePropertySet on it to make sure the plug-in doesn't cause
 			 * a memory leak.
 			 * 
 			 * \sa
@@ -544,8 +544,8 @@ namespace AK::Wwise::Plugin
 			 * \brief Frees the inner property set.
 			 * 
 			 * It will also remove the object from its list if the object has been inserted. As such, you are not
-			 * required to call \ref RemovePropertySet beforehand.
-			 * 
+			 * required to call \ref AK::Wwise::Plugin::V1::ObjectStore::RemovePropertySet beforehand.
+			 *
 			 * \akwarning
 			 * 		Do not use the in_pPropertySet after calling this function.
 			 * \endakwarning
@@ -611,7 +611,7 @@ namespace AK::Wwise::Plugin
 			{
 			public:
 				/**
-				 * \copydoc CObjectStore_::Instance
+				 * \copydoc ak_wwise_plugin_notifications_object_store_v1::Instance
 				 */
 				using Instance = CObjectStore_::Instance;
 
@@ -714,7 +714,7 @@ namespace AK::Wwise::Plugin
 				 * 
 				 * \sa
 				 * - \ref wwiseplugin_objectstore_notifications
-				 * 
+				 *
 				 * \param[in] in_PSet The inner property set that was added or removed.
 				 * \param[in] in_uiIndex The insertion/removal index inside a named list.
 				 * \param[in] in_eOperation InnerObjectAdded or InnerObjectRemoved.
@@ -729,7 +729,7 @@ namespace AK::Wwise::Plugin
 
 		/**
 		 * \brief Requests an ObjectStore interface, provided as m_objectStore variable.
-		 * 
+		 *
 		 * Deriving your plug-in class from RequestObjectStore will automatically request both ObjectStore and
 		 * Notifications::ObjectStore_ interfaces. From this point, you will be able to derive from the virtual
 		 * functions, as defined in Notifications::ObjectStore_, and access the host-provided functions in the

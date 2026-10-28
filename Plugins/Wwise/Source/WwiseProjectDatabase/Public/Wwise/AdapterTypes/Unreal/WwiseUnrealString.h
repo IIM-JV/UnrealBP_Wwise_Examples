@@ -1,4 +1,4 @@
-﻿/*******************************************************************************
+/*******************************************************************************
 The content of this file includes portions of the proprietary AUDIOKINETIC Wwise
 Technology released in source code form as part of the game integration package.
 The content of this file may not be used without valid licenses to the
@@ -12,12 +12,18 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 
+#include "Wwise/WwiseUnrealVersion.h"
 #include "Containers/UnrealString.h"
+
+#if UE_5_8_OR_LATER
+#include "Containers/SharedString.h"
+#endif
+
 #include "Misc/Paths.h"
 #include "Wwise/AdapterTypes/WwiseString.h"
 
@@ -32,14 +38,18 @@ public:
 	WwiseUnrealString(){}
 	
 	WwiseUnrealString(const FString& InString)
-	{
-		String = InString;
-	}
+		: IWwiseString(InString)
+	{}
 
+#if UE_5_8_OR_LATER
+	WwiseUnrealString(const UE::FSharedString& InString)
+		: IWwiseString(FString(InString))
+	{}
+#endif
+	
 	WwiseUnrealString(const TCHAR* InChars)
-	{
-		String = FString(InChars);
-	}
+		: IWwiseString(FString(InChars))
+	{}
 
 	bool IsEmpty() const override
 	{

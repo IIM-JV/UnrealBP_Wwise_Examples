@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Modules/ModuleManager.h"
@@ -69,19 +69,14 @@ public:
 			SCOPED_WWISE_EVENT(TEXT("StartupModule: AkAudio"));
 			UE_LOG(LogWwise, Log, TEXT("WwiseModule: Loading AkAudio"));
 			ModuleManager.LoadModule(TEXT("AkAudio"));
-			FCoreDelegates::OnPostEngineInit.AddRaw(this, &FWwiseModule::OnPostEngineInit);
+#if UE_5_8_OR_LATER
+			OnPostEngineInitHandle = FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &FWwiseModule::OnPostEngineInit);
+#else
+			OnPostEngineInitHandle = FCoreDelegates::OnPostEngineInit.AddRaw(this, &FWwiseModule::OnPostEngineInit);
+#endif
 		}
 
 		// Loading optional modules - Modules defined by Project Settings
-		bool bAkAudioMixerEnabled = false;
-		GConfig->GetBool(TEXT("/Script/AkAudio.AkSettings"), TEXT("bAkAudioMixerEnabled"), bAkAudioMixerEnabled, GGameIni);
-		if (bAkAudioMixerEnabled)
-		{
-			SCOPED_WWISE_EVENT(TEXT("StartupModule: AkAudioMixer"));
-			UE_LOG(LogWwise, Log, TEXT("WwiseModule: Loading AkAudioMixer"));
-			ModuleManager.LoadModule(TEXT("AkAudioMixer"));
-		}
-
 		bool bWwiseAudioLinkEnabled = false;
 		GConfig->GetBool(TEXT("/Script/AkAudio.AkSettings"), TEXT("bWwiseAudioLinkEnabled"), bWwiseAudioLinkEnabled, GGameIni);
 		if (bWwiseAudioLinkEnabled)
@@ -114,9 +109,19 @@ public:
 
 	virtual void ShutdownModule() override
 	{
+		if (OnPostEngineInitHandle.IsValid())
+		{
+#if UE_5_8_OR_LATER
+			FCoreDelegates::GetOnPostEngineInit().Remove(OnPostEngineInitHandle);
+#else
+			FCoreDelegates::OnPostEngineInit.Remove(OnPostEngineInitHandle);
+#endif
+		}
 	}
 
 #endif
+private:
+	FDelegateHandle OnPostEngineInitHandle;
 };
 
 IMPLEMENT_MODULE(FWwiseModule, Wwise);

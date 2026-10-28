@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 // AkCommonDefs.h
@@ -36,6 +36,7 @@ the specific language governing permissions and limitations under the License.
 #include <AK/SoundEngine/Common/AkSpeakerConfig.h>
 #include <AK/SoundEngine/Common/AkSpeakerVolumes.h>
 #include <AK/Tools/Common/AkBitFuncs.h>
+#include <AK/Tools/Common/AkAssert.h>
 
 //-----------------------------------------------------------------------------
 // AUDIO DATA FORMAT
@@ -279,18 +280,6 @@ struct AkPositioningData
 	AkBehavioralPositioningData behavioral;			///< Positioning data inherited from sound structures and mix busses.
 };
 
-/// Structure containing information about system-level support for 3D audio.
-/// "3D Audio" refers to a system's ability to position sound sources in a virtual 3D space, pan them accordingly on a range of physical speakers, and produce a binaural mix where appropriate.
-/// We prefer "3D Audio" to "Spatial" to avoid ambiguity with spatial audio, which typically involves sound propagation and environment effects.
-struct Ak3DAudioSinkCapabilities
-{
-	AkChannelConfig channelConfig{};                              ///< Channel configuration of the main mix.
-	AkUInt32        uMaxSystemAudioObjects = 0;                   ///< Maximum number of System Audio Objects that can be active concurrently. A value of zero indicates the system does not support this feature.
-	AkUInt32        uAvailableSystemAudioObjects = 0;             ///< How many System Audio Objects can currently be sent to the sink. This value can change at runtime depending on what is playing. Can never be higher than uMaxSystemAudioObjects.
-	bool            bPassthrough = false;                         ///< Separate  pass-through mix is supported.
-	bool            bMultiChannelObjects = false;                 ///< Can handle multi-channel objects
-};
-
 /// Enum of the possible object destinations when reaching a 3D audio-capable sink
 enum class AkAudioObjectDestination
 {
@@ -362,9 +351,14 @@ public:
 
 	/// \name Interleaved interface
 	//@{
+
+
 	/// Get address of data: to be used with interleaved buffers only.
-	/// \remarks Only source plugins can output interleaved data. This is determined at 
-	/// initial handshaking.
+	/// 
+	/// \remarks Most buffers contain de-interleaved data. Exceptions are:
+	/// - Source plugins can produce interleaved buffers. This is determined at initial handshaking.
+	/// - Callbacks registered with <tt>AK::SoundEngine::RegisterCaptureCallback</tt> receive interleaved buffers.
+	/// 
 	/// \sa 
 	/// - \ref fx_audiobuffer_struct
 	AkForceInline void * GetInterleavedData()
@@ -420,7 +414,8 @@ public:
 		return in_uChannelIdx;
 	}
 
-	/// Get the buffer of the ith channel. 
+	/// Get the buffer of the ith channel. To be used with de-interleaved buffers only.
+	/// 
 	/// Access to channel data is most optimal through this method. Use whenever the
 	/// speaker configuration is known, or when an operation must be made independently
 	/// for each channel.

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "StaticPluginWriter.h"
@@ -73,7 +73,7 @@ namespace StaticPluginWriter_Helper
 		if (!PlatformPath.IsValid() || PlatformPath.IsNone())
 		{
 			UE_LOG(LogAudiokineticTools, Verbose,
-			       TEXT("StaticPluginWriter::GetLibraryFileNames, Could not find generated Soundbank for Platform %s"),
+			       TEXT("StaticPluginWriter::GetLibraryFileNames, Could not find generated SoundBank for Platform %s"),
 			       *InWwisePlatformName);
 			return Result;
 		}
@@ -113,7 +113,7 @@ namespace StaticPluginWriter_Helper
 	{
 		constexpr auto AkFactoryHeaderFormatString = TEXT("#include <AK/Plugin/{0}Factory.h>");
 
-		constexpr auto StaticFactoryHeaderFileTemplate = TEXT("#if PLATFORM_{0}\n{1}\n#endif\n");
+		constexpr auto StaticFactoryHeaderFileTemplate = TEXT("#if defined(PLATFORM_{0}) && PLATFORM_{0}\n{1}\n#endif\n");
 
 		TArray<FString> PluginLines;
 
@@ -183,12 +183,12 @@ namespace StaticPluginWriter
 
 		if (PlatformInfo->bUsesStaticLibraries)
 		{
-			const auto PluginArray = StaticPluginWriter_Helper::GetLibraryFileNames(InWwisePlatform);
+			const auto PluginArray = StaticPluginWriter_Helper::GetLibraryFileNames(PlatformInfo->WwisePlatform);
 
 			const FString AkPluginIncludeFileName = FString::Format(TEXT("Ak{0}Plugins.h"), { PlatformInfo->WwisePlatform });
 			const FString AkPluginIncludeFilePath = FPaths::Combine(FAkPlatform::GetWwiseSoundEnginePluginDirectory(), TEXT("Source"), TEXT("WwiseSoundEngine"), TEXT("Public"), TEXT("Generated"), AkPluginIncludeFileName);
 
-			StaticPluginWriter_Helper::ModifySourceCode(*AkPluginIncludeFilePath, PlatformInfo->WwisePlatform, PluginArray);
+			StaticPluginWriter_Helper::ModifySourceCode(*AkPluginIncludeFilePath, InWwisePlatform, PluginArray);
 		}
 	}
 }

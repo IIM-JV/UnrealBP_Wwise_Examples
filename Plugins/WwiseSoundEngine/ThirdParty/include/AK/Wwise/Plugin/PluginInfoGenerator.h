@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /**
@@ -153,8 +153,8 @@ namespace AK::Wwise::Plugin
 	private:
 		/**
 		 * \brief Locate the C interface of our CPPInstance in our current plug-in.
-		 * 
-		 * \ref PluginInfoTLS<>::tls_pluginInfo is used to retrieve the plug-in we are trying to instantiate.
+		 *
+		 * \ref AK::Wwise::Plugin::PluginInfoTLS::tls_pluginInfo is used to retrieve the plug-in we are trying to instantiate.
 		 * \return CInstance* The C interface related to our CPPInstance.
 		 */
 		static CInstance* GetCInterfaceInstance()
@@ -369,8 +369,8 @@ namespace AK::Wwise::Plugin
 			 * \return A pair containing a VersionPack of the requested versions and a VersionPack of the provided versions of the interface.
 			 * 
 			 * \sa
-			 * - \ref k_latestInterfaceVersion
-			 * - \ref VersionPack
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::k_latestInterfaceVersion
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::VersionPack
 			 */
 			template <uint32_t in_interfaceVersion = k_latestInterfaceVersion, uint32_t... in_requestedVersions, uint32_t... in_providedVersions>
 			static constexpr auto GetUsedInterfaceVersions(VersionPack<in_requestedVersions...> = {}, VersionPack<in_providedVersions...> = {})
@@ -401,8 +401,8 @@ namespace AK::Wwise::Plugin
 			 * \brief Pair type containing a VersionPack of the requested versions and a VersionPack of the provided versions of the interface.
 			 * 
 			 * \sa
-			 * - \ref GetUsedInterfaceVersions
-			 * - \ref VersionPack
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::GetUsedInterfaceVersions
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::VersionPack
 			 */
 			using UsedInterfaceVersions = decltype(GetUsedInterfaceVersions());
 
@@ -410,8 +410,8 @@ namespace AK::Wwise::Plugin
 			 * \brief VersionPack containing the requested versions of the interface by the plug-in.
 			 * 
 			 * \sa
-			 * - \ref UsedInterfaceVersions
-			 * - \ref VersionPack
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::UsedInterfaceVersions
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::VersionPack
 			 */
 			using RequestedInterfaceVersions = typename UsedInterfaceVersions::first_type;
 
@@ -419,8 +419,8 @@ namespace AK::Wwise::Plugin
 			 * \brief VersionPack containing the provided versions of the interface by the plug-in.
 			 * 
 			 * \sa
-			 * - \ref UsedInterfaceVersions
-			 * - \ref VersionPack
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::UsedInterfaceVersions
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::VersionPack
 			 */
 			using ProvidedInterfaceVersions = typename UsedInterfaceVersions::second_type;
 
@@ -430,7 +430,7 @@ namespace AK::Wwise::Plugin
 				 * \brief Is the interface requested (interface provided by host) by the generated plug-in class.
 				 * 
 				 * \sa
-				 * - \ref RequestedInterfaceVersions
+				 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::RequestedInterfaceVersions
 				 */
 				k_requested = RequestedInterfaceVersions::size() >= 1,
 
@@ -438,7 +438,7 @@ namespace AK::Wwise::Plugin
 				 * \brief Is the interface provided (interface used by host) by the generated plug-in class.
 				 * 
 				 * \sa
-				 * - \ref ProvidedInterfaceVersions
+				 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::ProvidedInterfaceVersions
 				 */
 				k_provides = ProvidedInterfaceVersions::size() >= 1,
 
@@ -460,9 +460,9 @@ namespace AK::Wwise::Plugin
 			 * \return uint32_t The version of the interface.
 			 * 
 			 * \sa
-			 * - \ref RequestedInterfaceVersions
-			 * - \ref ProvidedInterfaceVersions
-			 * - \ref k_latestInterfaceVersion
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::RequestedInterfaceVersions
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::ProvidedInterfaceVersions
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::k_latestInterfaceVersion
 			 */
 			static constexpr uint32_t GetInterfaceVersion()
 			{
@@ -486,8 +486,8 @@ namespace AK::Wwise::Plugin
 				 * \brief Version of the interface used by the plug-in or k_latestInterfaceVersion if unused.
 				 * 
 				 * \sa
-				 * - \ref GetInterfaceVersion
-				 * - \ref k_latestInterfaceVersion
+				 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::GetInterfaceVersion
+				 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::k_latestInterfaceVersion
 				 */
 				k_interfaceVersion = GetInterfaceVersion()
 			};
@@ -497,7 +497,7 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \sa
 			 * - \ref AK::Wwise::Plugin::KnownInterfaceClass
-			 * - \ref k_interfaceVersion
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::InterfaceInfo::k_interfaceVersion
 			 */
 			using InterfaceClass = typename KnownInterfaceClass<in_interfaceType, k_interfaceVersion>::Type;
 
@@ -537,7 +537,7 @@ namespace AK::Wwise::Plugin
 		 * \brief Count the number of interfaces we are currently using.
 		 * 
 		 * \sa
-		 * - \ref k_interfaceCount
+		 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::k_interfaceCount
 		 */
 		template <InterfaceType in_interface = (InterfaceType)(AK_WWISE_PLUGIN_INTERFACE_TYPE_NUM - 1)>
 		static constexpr size_t CountInterfaces()
@@ -565,7 +565,7 @@ namespace AK::Wwise::Plugin
 			 * \brief Number of interfaces we are currently using.
 			 * 
 			 * \sa
-			 * - \ref CountInterfaces
+			 * - \ref AK::Wwise::Plugin::PluginInfoGenerator::CountInterfaces
 			 */
 			k_interfaceCount = CountInterfaces()
 		};
@@ -707,9 +707,9 @@ namespace AK::Wwise::Plugin
 		 * It is currently assumed the in_pluginInfo parameter, as passed, is the same as the one provided in the
 		 * ak_wwise_plugin_container structure. As such, in the current version of the SDK, this is not reentrant, as
 		 * there is only one structure used to transfer data.
-		 * 
-		 * \warning This function is not reentrant. See \ref m_interfaceArray for more information.
-		 * 
+		 *
+		 * \warning This function is not reentrant. See \ref AK::Wwise::Plugin::PluginInfoGenerator::m_interfaceArray for more information.
+		 *
 		 * \param in_pluginInfo Plug-in structure to instantiate.
 		 * \return InterfaceArrayItem* The new instance: A copy of the structure, containing the instantiated pointers.
 		 */

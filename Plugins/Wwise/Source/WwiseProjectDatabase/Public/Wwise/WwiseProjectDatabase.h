@@ -12,15 +12,17 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 
 #include <shared_mutex>
+#include <atomic>
 
 #include "Wwise/WwiseStringConverter.h"
 #include "Wwise/WwiseDataStructure.h"
+#include "Wwise/WwiseProjectDatabaseCancellationToken.h"
 #include "Wwise/WwiseResourceLoader.h"
 #include "Wwise/WwiseProjectDatabaseModule.h"
 #include "Wwise/AdapterTypes/WwiseDataTypesAdapter.h"
@@ -78,6 +80,7 @@ public:
 	
 	const WwiseEventGlobalIdsMap& GetEvents() const;
 	WwiseDBSet<WwiseRefEvent> GetEvent(const FWwiseEventInfo& InInfo) const;
+	WwiseDBSet<WwiseRefEvent> GetAllLanguageEvents(const FWwiseEventInfo& InInfo) const;
 	
 	const WwiseExternalSourceGlobalIdsMap& GetExternalSources() const;
 	WwiseRefExternalSource GetExternalSource(const FWwiseObjectInfo& InInfo) const;
@@ -86,7 +89,7 @@ public:
 	WwiseRefGameParameter GetGameParameter(const FWwiseObjectInfo& InInfo) const;
 	
 	const WwiseMediaGlobalIdsMap& GetMediaFiles() const;
-	WwiseRefMedia GetMediaFile(const FWwiseObjectInfo& InInfo) const;
+	WwiseRefMedia GetMediaFile(const FWwiseObjectInfo& InInfo, uint32 InLanguageId = 0) const;
 	
 	const WwisePluginLibGlobalIdsMap& GetPluginLibs() const;
 	WwiseRefPluginLib GetPluginLib(const FWwiseObjectInfo& InInfo) const;
@@ -122,10 +125,10 @@ public:
 	const WwiseDBSharedPlatformId& GetCurrentPlatform() const { return CurrentPlatform; }
 	bool DisableDefaultPlatforms() const { return bDisableDefaultPlatforms; }
 
-	bool IsSingleUser(const WwiseAnyRef& Asset) const;
-	bool IsSingleUserMedia(uint32 InId) const;
-	bool IsSingleUserSoundBank(uint32 InId, uint32 InLanguageId) const;
-	bool IsSingleUserSoundBank(uint32 InId, const WwiseDBString& InLanguage) const;
+	int GetUsageCount(const WwiseAnyRef& Asset) const;
+	int GetMediaUsageCount(uint32 InId) const;
+	int GetSoundBankUsageCount(uint32 InId, uint32 InLanguageId) const;
+	int GetSoundBankUsageCount(uint32 InId, const WwiseDBString& InLanguage) const;
 
 	uint32 GetLanguageId(const WwiseDBString& Name) const;
 	WwiseDBString GetLanguageName(uint32 InId) const;
@@ -209,7 +212,17 @@ public:
 	virtual ~FWwiseProjectDatabase() {}
 
 	virtual void UpdateDataStructure(
-		const WwiseDBGuid* InBasePlatformGuid = &BasePlatformGuid) {}
+		const WwiseDBGuid* InBasePlatformGuid = &BasePlatformGuid,
+		FWwiseProjectDatabaseCancellationToken InToken = {}) {}
+
+	/** Bumps the data-structure update generation and returns the new value.
+	 *  Call on the requesting thread before dispatching an async update, so ordering
+	 *  between competing requests is deterministic. Default base impl: no-op. */
+	virtual uint32 BumpUpdateGeneration() { return 0; }
+
+	/** Stable pointer to the update-generation counter, polled by an in-flight build to
+	 *  detect if it has been cancelled. Null means cancellation is unsupported. */
+	virtual const std::atomic<uint32>* GetUpdateGenerationToken() const { return nullptr; }
 
 	virtual void PrepareProjectDatabaseForPlatform(FWwiseResourceLoaderPtr&& InResourceLoader) {}
 	virtual FWwiseResourceLoaderPtr GetResourceLoader() { return nullptr; }
@@ -217,7 +230,7 @@ public:
 
 	FWwiseSharedLanguageId GetCurrentLanguage() const;
 	FWwiseSharedPlatformId GetCurrentPlatform() const;
-	virtual bool IsProjectDatabaseParsed() const { return bIsDatabaseParsed; };
+	virtual bool IsProjectDatabaseParsed() const { return bIsDatabaseParsed.load(std::memory_order_relaxed); };
 
 	/**
 	 * Sets the path where the Generated SoundBanks are located, relative to the Unreal Content folder.
@@ -234,7 +247,7 @@ public:
 protected:
 	/**
 	 * This is called by Instantiate when a new Project Database is instantiated for staging purposes.
-	 * 
+	 *
 	 * @param DefaultProjectDatabase The original Project Database
 	 */
 	virtual void InitForStaging(const FWwiseProjectDatabase& DefaultProjectDatabase);
@@ -265,7 +278,7 @@ protected:
 
 	bool DisableDefaultPlatforms() const;
 	
-	bool bIsDatabaseParsed = false;
+	std::atomic<bool> bIsDatabaseParsed{ false };
 	FDirectoryPath GeneratedSoundBanksPath;
 };
 

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -44,7 +44,7 @@ struct UAssetDataSourceId
 
 struct UAssetDataSourceInformation
 {
-	EWwiseItemType::Type Type;
+	EWwiseItemType Type;
 	UAssetDataSourceId Id;
 	TArray<FAssetData> AssetsData;
 	FName AssetName;
@@ -61,6 +61,7 @@ struct UAssetDataSourceInformation
 
 class FUAssetDataSource
 {
+protected:
 	// UAssets that have a valid Guid that exists in the Project Database
 	TMap<FGuid, UAssetDataSourceInformation> UsedItems;
 	// UAssets with invalid Guid will use the ShortId to sync with the Project Database.
@@ -68,12 +69,14 @@ class FUAssetDataSource
 	// UAssets with invalid Guid and ShortId will use the AssetName to sync with the Project Database. Also includes "None" States.
 	TMap<FName, UAssetDataSourceInformation> UAssetWithoutShortId;
 
+private:
 	UAssetDataSourceInformation CreateUAssetInfo(const UAssetDataSourceId& Id, const FAssetData& Asset);
 
 	bool GuidExistsInProjectDatabase(const FGuid ItemId);
 
 public:
-	void ConstructItems();
-	void GetAssetsInfo(FGuid ItemId, uint32 ShortId, FString Name, uint32 GroupId, EWwiseItemType::Type& ItemType, FName& AssetName, TArray<FAssetData>& Assets);
+	virtual ~FUAssetDataSource() = default;
+	virtual void ConstructItems();
+	void GetAssetsInfo(FGuid ItemId, uint32 ShortId, FString Name, uint32 GroupId, EWwiseItemType& ItemType, FName& AssetName, TArray<FAssetData>& Assets);
 	void GetOrphanAssets(TArray<UAssetDataSourceInformation>& OrphanAssets) const;
 };

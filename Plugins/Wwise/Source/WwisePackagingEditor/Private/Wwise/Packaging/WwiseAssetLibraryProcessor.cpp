@@ -5,25 +5,31 @@ The content of this file may not be used without valid licenses to the
 AUDIOKINETIC Wwise Technology.
 Note that the use of the game engine is subject to the Unreal(R) Engine End User
 License Agreement at https://www.unrealengine.com/en-US/eula/unreal
- 
+
 License Usage
- 
+
 Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/Packaging/WwiseAssetLibraryProcessor.h"
 
+#include "AssetDefinition.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Async/ParallelFor.h"
+#include "Settings/ProjectPackagingSettings.h"
 #include "Wwise/Packaging/WwiseAssetLibraryFilter.h"
 #include "Wwise/Packaging/WwiseAssetLibraryInfo.h"
 #include "Wwise/Packaging/WwiseAssetLibraryFilteringSharedData.h"
 #include "Wwise/Metadata/WwiseMetadataLanguage.h"
 #include "Wwise/WwiseAllowShrinking.h"
 #include "Wwise/WwiseGuidConverter.h"
+#include "Wwise/Packaging/WwisePackagingData.h"
+#include "Wwise/Packaging/WwisePackagingUtils.h"
+#include "Wwise/Stats/Packaging.h"
 
 FCriticalSection FWwiseAssetLibraryProcessor::IsFilteringCrit;
 
@@ -49,7 +55,7 @@ void FWwiseAssetLibraryProcessor::RetrieveMediaMap(FWwiseAssetLibraryFilteringSh
 
 	for (const auto& Item : Media)
 	{
-		WwiseDBPair<const WwiseDatabaseMediaIdKey, WwiseRefMedia> Pair(Item);
+		WwiseDBPair<const WwiseDatabaseLocalizableIdKey, WwiseRefMedia> Pair(Item);
 		if (!FilterMedia(Pair.GetSecond()))
 		{
 			continue;
@@ -112,30 +118,180 @@ bool FWwiseAssetLibraryProcessor::FilterSoundBank(const WwiseRefSoundBank& Sound
 	return true;
 }
 
-void FWwiseAssetLibraryProcessor::FilterLibraryAssets(FWwiseAssetLibraryFilteringSharedData& Shared, FWwiseAssetLibraryInfo& Library, bool bUpdateRemaining, bool bPackageAssets, bool bUpdateFilteredAssets)
+void FWwiseAssetLibraryProcessor::GetRelevantAssets(const TArray<FString>& PackagePaths, TArray<FAssetData>& RelevantAssets, const TArray<FString>& ExcludedPackagePaths, bool bIncludeOnlyOnDiskAssets)
+{
+	RelevantAssets.Empty();
+	FARFilter Filter;
+	Filter.bRecursivePaths = true;
+	Filter.bIncludeOnlyOnDiskAssets = bIncludeOnlyOnDiskAssets;
+	Filter.TagsAndValues.Add("WwiseGuid");
+	for (auto& PackagePath : PackagePaths)
+	{
+		FString Package = WwisePackagingUtils::GetGameplayModuleRoot(PackagePath);
+		Filter.PackagePaths.Add(FName(Package));
+	}
+
+	auto& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get();
+	TArray<FAssetData> WwiseAssets;
+	AssetRegistryModule.GetAssets(Filter, WwiseAssets);
+
+	for (auto& AssetData : WwiseAssets)
+	{
+		FString Package = WwisePackagingUtils::GetGameplayModuleRoot(AssetData.PackagePath.ToString());
+		bool bIgnore = false;
+		for (auto& ExcludedPackagePath : ExcludedPackagePaths)
+		{
+			if (ExcludedPackagePath.Contains(Package))
+			{
+				bIgnore = true;
+			}
+		}
+		if (bIgnore)
+		{
+			continue;
+		}
+		RelevantAssets.AddUnique(AssetData);
+	}
+}
+
+void FWwiseAssetLibraryProcessor::FilterLibraryAssets(FWwiseAssetLibraryFilteringSharedData& Shared, FWwiseAssetLibraryInfo& Library, bool bUpdateRemaining, bool bUpdateFilteredAssets, const std::atomic<uint32>* CancellationToken, uint32 ExpectedTokenValue)
 {
 	FScopeLock Lock(&IsFilteringCrit);
-	
+
+	Shared.CancellationToken = CancellationToken;
+	Shared.ExpectedTokenValue = ExpectedTokenValue;
+
+	auto GlobalMedias = Shared.Db.GetMediaFiles();
+
 	const auto Num { Shared.Remaining.Num() };
 	std::atomic_int32_t FilteredAssetsNum { 0 };
 	TArray<int32> FilteredPosArray;
 	FilteredPosArray.AddUninitialized(Num);
 
 	Shared.Remaining.Compact();
+	Shared.SkippedAssetsCount = 0;
 
 	const auto Filters{ Library.GetFilters() };
 	ParallelFor(Filters.Num(), [this, &Shared, &Library, &Filters](int32 Iter) mutable
 	{
+		if (Shared.IsCancelled())
+		{
+			return;
+		}
 		if (const auto& Filter{ Filters[Iter] })
 		{
 			Filter->PreFilter(Shared, Library);
 		}
 	});
-	
-	ParallelFor(Num, [this, &Shared, &Library, &FilteredAssetsNum, &FilteredPosArray](int32 Iter)
+
+	if (Shared.IsCancelled())
 	{
+		return;
+	}
+
+	const auto AssetDataNum { Shared.AssetsData.Num() };
+	FWwisePackagingData PackagingData;
+
+	TArray<FWwisePackagingId> PackagedIdList;
+	PackagedIdList.SetNum(AssetDataNum);
+
+	TArray<TArray<WwiseDBShortId>> MediaIdList;
+	MediaIdList.SetNum(AssetDataNum);
+
+	ParallelFor(AssetDataNum, [this, &Shared, &GlobalMedias, &PackagedIdList, &MediaIdList](int32 Iter)
+	{
+		if (Shared.IsCancelled())
+		{
+			return;
+		}
+		const FAssetData& AssetData{ Shared.AssetsData[Iter] };
+
+		auto GuidTag = AssetData.TagsAndValues.FindTag(GET_MEMBER_NAME_CHECKED(FWwiseObjectInfo, WwiseGuid));
+		auto ShortIdTag = AssetData.TagsAndValues.FindTag(GET_MEMBER_NAME_CHECKED(FWwiseObjectInfo, WwiseShortId));
+
+		if (GuidTag.IsSet() && ShortIdTag.IsSet())
+		{
+			FGuid Guid(GuidTag.AsString());
+			int32 ShortId = FCString::Atoi(*ShortIdTag.GetValue());
+			FWwisePackagingId packagingId(Guid, ShortId);
+			PackagedIdList[Iter] = packagingId;
+
+			TArray<WwiseDBShortId> mediaList;
+
+			auto Events = Shared.Db.GetAllLanguageEvents(FWwiseEventInfo(Guid, ShortId, AssetData.AssetName.ToString()));
+			auto Bus = Shared.Db.GetBus(FWwiseEventInfo(Guid, ShortId, AssetData.AssetName.ToString()));
+			if (Bus.IsValid())
+			{
+				auto Medias = Bus.GetSoundBankMedia(GlobalMedias);
+				for (auto& Media : Medias)
+				{
+					mediaList.Add(Media.Value.MediaId());
+				}
+			}
+
+			for (auto& Event : Events)
+			{
+				auto Medias = Event.GetAllMedia(Shared.Db.GetMediaFiles());
+				for (auto& Media : Medias)
+				{
+					mediaList.Add(Media.Value.MediaId());
+				}
+			}
+
+			MediaIdList[Iter] = mediaList;
+		}
+	});
+
+	for (const FWwisePackagingId& LocalId : PackagedIdList)
+	{
+		PackagingData.PackagingIds.Add(LocalId);
+	}
+
+	for (const TArray<WwiseDBShortId>& LocalIds : MediaIdList)
+	{
+		PackagingData.MediaIds.Append(LocalIds);
+	}
+
+	ParallelFor(Num, [this, &Shared, &Library, &FilteredAssetsNum, &FilteredPosArray, &GlobalMedias, &PackagingData](int32 Iter)
+	{
+		if (Shared.IsCancelled())
+		{
+			return;
+		}
+
 		const WwiseAnyRef& SourceRef{ Shared.Sources[Shared.Remaining[Iter]] };
-		if (FilterAsset(Shared, Library, SourceRef))
+		bool bShouldFilter = false;
+
+		if (!Shared.bConsiderAssetsData)
+		{
+			bShouldFilter = true;
+		}
+		if(SourceRef.GetType() == WwiseRefType::SoundBank && SourceRef.GetSoundBank()->IsInitBank())
+		{
+			bShouldFilter = true;
+		}
+
+		if(SourceRef.GetType() == WwiseRefType::SoundBank)
+		{
+			for (auto& Event : SourceRef.GetSoundBank()->Events)
+			{
+				FWwisePackagingId NewEntry = FWwisePackagingId(Event.GUID, Event.Id);
+				if (PackagingData.PackagingIds.Contains(NewEntry))
+				{
+					bShouldFilter = true;
+					break;
+				}
+			}
+		}
+		else if(SourceRef.GetType() == WwiseRefType::Media)
+		{
+			if (PackagingData.MediaIds.Contains(SourceRef.GetId()))
+			{
+				bShouldFilter = true;
+			}
+		}
+
+		if (bShouldFilter && FilterAsset(Shared, Library, SourceRef))
 		{
 			const auto IdToAdd = FilteredAssetsNum++;
 			FilteredPosArray[IdToAdd] = Iter;
@@ -144,6 +300,10 @@ void FWwiseAssetLibraryProcessor::FilterLibraryAssets(FWwiseAssetLibraryFilterin
 
 	ParallelFor(Filters.Num(), [this, &Shared, &Library, &Filters](int32 Iter) mutable
 	{
+		if (Shared.IsCancelled())
+		{
+			return;
+		}
 		if (const auto& Filter{ Filters[Iter] })
 		{
 			Filter->PostFilter(Shared, Library);
@@ -165,7 +325,7 @@ void FWwiseAssetLibraryProcessor::FilterLibraryAssets(FWwiseAssetLibraryFilterin
 		CreateAssetLibraryRef(NewRef, SourceRef);
 		FilteredAssets.Emplace(NewRef);
 	}
-	
+
 	if (bUpdateRemaining)
 	{
 		for (auto Iter = FilteredAssetsNum - 1; Iter >= 0; --Iter)
@@ -206,13 +366,13 @@ bool FWwiseAssetLibraryProcessor::FilterAsset(const FWwiseAssetLibraryFilteringS
 	// Calculate all filters in parallel
 	TArray<bool> Result;
 	Result.AddUninitialized(Num);
-	
+
 	ParallelFor(Num, [this, &Filters = Filters, &Result, &Shared, &Item](int32 Iter)
 	{
 		const auto Filter = Filters[Iter];
 		Result[Iter] = UNLIKELY(!Filter) || Filter->IsAssetAvailable(Shared, Item);
 	});
-	
+
 	for (const bool IndividualResult : Result)
 	{
 		if (!IndividualResult)
@@ -245,9 +405,8 @@ bool FWwiseAssetLibraryProcessor::CreateAssetLibraryRef(FWwiseAssetLibraryRef& N
 		break;
 	default: {}
 	}
-	{
-		NewRef.Guid = FWwiseGuidConverter::ToFGuid(SourceRef.GetGuid());
-	}
+
+	NewRef.Guid = FWwiseGuidConverter::ToFGuid(SourceRef.GetGuid());
 	NewRef.Id = SourceRef.GetId();
 	NewRef.Name = FName(*SourceRef.GetName());
 	return true;

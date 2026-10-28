@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "ProjectedResultColumn.h"
@@ -22,7 +22,6 @@ Copyright (c) 2025 Audiokinetic Inc.
 #include "Widgets/SWidget.h"
 #include "AkUnrealAssetDataHelper.h"
 #include "WwiseUnrealHelper.h"
-#include "ObjectTools.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Text/STextBlock.h"
@@ -44,8 +43,6 @@ const TSharedRef<SWidget> FProjectedResultColumn::ConstructRowWidget(FWwiseRecon
 {
 	if (EnumHasAllFlags(TreeItem.OperationRequired, EWwiseReconcileOperationFlags::Delete))
 	{
-		bool bReferenced = false;
-		bool bReferencedByUndo = false;
 
 		auto Asset = TreeItem.Asset.GetAsset();
 		if (!IsValid(Asset))
@@ -61,9 +58,7 @@ const TSharedRef<SWidget> FProjectedResultColumn::ConstructRowWidget(FWwiseRecon
 			];
 		}
 
-		ObjectTools::GatherObjectReferencersForDeletion(TreeItem.Asset.GetAsset(), bReferenced, bReferencedByUndo);
-
-		if (bReferenced || bReferencedByUndo)
+		if (TreeItem.bIsAssetReferenced)
 		{
 			return SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
@@ -86,12 +81,9 @@ const TSharedRef<SWidget> FProjectedResultColumn::ConstructRowWidget(FWwiseRecon
 	}
 
 	auto WwiseRef = TreeItem.WwiseAnyRef.WwiseAnyRef;
-	FName AssetName = AkUnrealAssetDataHelper::GetAssetDefaultName(WwiseRef);
 	FString AssetPackagePath = IWwiseReconcile::Get()->GetAssetPackagePath(*WwiseRef);
-	int PackageLength = AssetViewUtils::GetPackageLengthForCooking(AssetPackagePath / AssetName.ToString(), FEngineBuildSettings::IsInternalBuild());
-	int MaxPath = AssetViewUtils::GetMaxCookPathLen();
 
-	if (PackageLength > MaxPath || PackageLength >= NAME_SIZE)
+	if (IWwiseReconcile::Get()->IsPathTooLong(WwiseRef))
 	{
 		return SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot()
@@ -112,9 +104,7 @@ const TSharedRef<SWidget> FProjectedResultColumn::ConstructRowWidget(FWwiseRecon
 	
 	if(EnumHasAnyFlags(TreeItem.OperationRequired, EWwiseReconcileOperationFlags::Create | EWwiseReconcileOperationFlags::RenameExisting | EWwiseReconcileOperationFlags::Move))
 	{
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-		FAssetData Asset = AssetRegistryModule.GetRegistry().GetAssetByObjectPath(AssetPackagePath / AkUnrealAssetDataHelper::GetAssetDefaultName(WwiseRef).ToString() + "." + AkUnrealAssetDataHelper::GetAssetDefaultName(WwiseRef).ToString());
-		if(Asset.IsValid())
+		if(IWwiseReconcile::Get()->UAssetExists(WwiseRef))
 		{
 			return SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()

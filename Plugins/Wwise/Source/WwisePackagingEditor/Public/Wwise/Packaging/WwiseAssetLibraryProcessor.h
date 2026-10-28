@@ -12,11 +12,13 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 #include "Wwise/WwisePackagingEditorModule.h"
+#include "AssetRegistry/AssetData.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 class WwiseRefMedia;
 class WwiseRefSoundBank;
@@ -49,11 +51,12 @@ public:
 	virtual bool FilterMedia(const WwiseRefMedia& Media);
 	virtual bool FilterSoundBank(const WwiseRefSoundBank& SoundBank);
 	
-	virtual void FilterLibraryAssets(FWwiseAssetLibraryFilteringSharedData& Shared, FWwiseAssetLibraryInfo& Library, bool bUpdateRemaining = true, bool bPackageAssets = true, bool bUpdateFilteredAssets = true);
+	virtual void FilterLibraryAssets(FWwiseAssetLibraryFilteringSharedData& Shared, FWwiseAssetLibraryInfo& Library, bool bUpdateRemaining = true, bool bUpdateFilteredAssets = true, const std::atomic<uint32>* CancellationToken = nullptr, uint32 ExpectedTokenValue = 0);
 	virtual bool FilterAsset(const FWwiseAssetLibraryFilteringSharedData& Shared, const FWwiseAssetLibraryInfo& Library, const WwiseAnyRef& Item);
 
 	virtual bool CreateAssetLibraryRef(FWwiseAssetLibraryRef&, const WwiseAnyRef& SourceRef);
 
+	static void GetRelevantAssets(const TArray<FString>& PackagePaths, TArray<FAssetData>& RelevantAssets, const TArray<FString>& ExcludedPackagePaths = {}, bool bIncludeOnlyOnDiskAssets = false);
 protected:
 	static FCriticalSection IsFilteringCrit;
 };

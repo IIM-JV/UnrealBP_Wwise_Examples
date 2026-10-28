@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -147,7 +147,7 @@ namespace AK
 
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_AddOutputListenerIdWithZeroListeners"), AKTEXT("Non-empty array of listeners specified for AddOutput() but uNumListeners is set to zero.")),
 
-			ERROR_CODE_DEF(AKTEXT("ErrorCode_3DObjectLimitExceeded"), AKTEXT("3D audio object limit exceeded; object %u instigated by voice/bus will be mixed.")),
+			ERROR_CODE_DEF(AKTEXT("ErrorCode_3DObjectLimitExceeded"), AKTEXT("3D audio object limit of %u exceeded; new audio objects will be mixed.")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_OpusHWFatalError"), AKTEXT("Fatal XAPU failure, Opus sounds will glitch while it is being reset.")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_OpusHWDecodeUnavailable"), AKTEXT("AkInitSettings::uNumSamplesPerFrame value unsupported by Opus hardware decoder. Supported size: 256, 512 and 1024. Opus will be disabled")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_OpusHWTimeout"), AKTEXT("Opus hardware stopped responding ")),
@@ -213,13 +213,12 @@ namespace AK
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_NotEnoughMemInFunction"), AKTEXT("Not enough memory to complete the operation in %s")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_FXNotFound"), AKTEXT("Effect Shareset not found in function %s")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_AudioNodeNotFound"), AKTEXT("Audio node not found in call to %s")),
-			ERROR_CODE_DEF(AKTEXT("ErrorCode_SetBusConfigUnsupported"), AKTEXT("SetBusConfig cannot modify master bus speaker configuration, it is dictated by the audio hardware.")),
+			ERROR_CODE_DEF(AKTEXT("ErrorCode_SetBusConfigUnsupported"), AKTEXT("SetBusConfig and ResetBusConfig cannot modify master bus speaker configuration, it is dictated by the output device.")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_BusNotFound"), AKTEXT("%s: Bus not found in Init bank.")),
 
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_MismatchingMediaSize"), AKTEXT("Mismatching media size error for file $m. Possibly caused by mismatching sound bank or WEM resources. WEM is %u bytes and sound bank expects %u bytes.")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_IncompatibleBankVersion"), AKTEXT("Load bank failed : incompatible bank version. Bank was generated with %s version of Wwise. The Bank version is %i and the current runtime SDK version is %i (%s)")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_UnexpectedPrepareGameSyncsCall"), AKTEXT("Unexpected call to PrepareGameSyncs. See: \"bEnableGameSyncPreparation\" parameter in AkInitSettings for more information")),
-			ERROR_CODE_DEF(AKTEXT("ErrorCode_MusicEngineNotInitialized"), AKTEXT("Music engine not initialized. Content can not be loaded from bank.")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_LoadingBankMismatch"), AKTEXT("Type mismatch while loading bank. Object $w is a %s in the currently loading bank. It was a %s in bank $b")),
 
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_ProxyObjectMismatch"), AKTEXT("Type mismatch while synching object from Wwise. Object $w was to be synched as a %s, but already existed as a %s")),
@@ -319,9 +318,17 @@ namespace AK
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_WwiseIODisconnected"), AKTEXT("Wwise disconnected during transfer of file $m. Sound will be terminated. Other errors may occur.")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_WwiseIODisconnectedStr"), AKTEXT("Wwise disconnected during transfer of file %s. Sound will be terminated. Other errors may occur.")),
 			ERROR_CODE_DEF(AKTEXT("ErrorCode_IODevice"), AKTEXT("Unknown I/O device error. %s returned %u on file $m.")),
+
+			ERROR_CODE_DEF(AKTEXT("ErrorCode_InvalidCommand"), AKTEXT("Invalid Sound Engine command received. Command will be skipped. ID: %i (%s)")),
+			ERROR_CODE_DEF(AKTEXT("ErrorCode_PlayingIDAlreadyExists"), AKTEXT("Playing ID already exists. New playing IDs must be generated when posting events. ID: %i")),
+			ERROR_CODE_DEF(AKTEXT("ErrorCode_IOStreamLeak"), AKTEXT("I/O Error: Stream $m did not terminate normally (code %i). Memory leak detected.")),
+
+			ERROR_CODE_DEF(AKTEXT("ErrorCode_SetSidechainMixConfigInvalid"), AKTEXT("Invalid channel configuration specified for SetSidechainMixConfig. Audio Objects configuration is not supported.")),
+
+			ERROR_CODE_DEF(AKTEXT("ErrorCode_NodeNotCompatibleWithMidi"), AKTEXT("Container is not compatible with MIDI playback. This may be because the container is configured in continuous mode.")),
 		};
 
-		static_assert((sizeof(s_aszMonitorErrorInfos) / sizeof(s_aszMonitorErrorInfos[0])) == AK::Monitor::Num_ErrorCodes, "ARRAYSIZE(AK::Monitor::s_aszMonitorErrorInfos) is not matching AK::Monitor::Num_ErrorCodes, make sure they are maintained at the same time.");
+		static_assert(AK::Monitor::Num_ErrorCodes == 227, "ARRAYSIZE(AK::Monitor::s_aszMonitorErrorInfos) is not matching AK::Monitor::Num_ErrorCodes, make sure they are maintained at the same time.");
 	}
 
 }

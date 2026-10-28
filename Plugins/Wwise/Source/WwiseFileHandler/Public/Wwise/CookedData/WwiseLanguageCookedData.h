@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -44,7 +44,7 @@ struct WWISEFILEHANDLER_API FWwiseLanguageCookedData
 	 * @brief Language name as set in Wwise
 	*/
 	UPROPERTY(BlueprintReadOnly, VisibleInstanceOnly, Category = "Wwise")
-	FName LanguageName;
+	FName LanguageName = {};
 
 	/**
 	 * @brief Is this language the default in Wwise

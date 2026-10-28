@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/Packaging/Filters/WwiseAssetLibraryEventFilter.h"
@@ -124,6 +124,8 @@ void UWwiseAssetLibraryEventFilter::PreFilter(
 		const FWwiseAssetLibraryFilteringSharedData& Shared,
 		const FWwiseAssetLibraryInfo& AssetLibraryInfo)
 {
+	CleanUpTemporaryData();
+
 	if (!bUseRegex)
 	{
 		TArray<FString> GlobFiltersArray;
@@ -131,29 +133,67 @@ void UWwiseAssetLibraryEventFilter::PreFilter(
 		GlobFilters = TSet(GlobFiltersArray);
 	}
 
-	const WwiseEventGlobalIdsMap& Events = Shared.Db.GetEvents();
-	for (auto Event : Events)
 	{
-		const bool bInside = PatternMatch(**Event.Value.EventName());
-		if (!bInside && !bIncludeSingleReferenceAssetsOnly)
+		const WwiseEventGlobalIdsMap& Events = Shared.Db.GetEvents();
+		int32 ProcessedCount = 0;
+		for(const auto& Event: Events)
 		{
-			continue;
-		}
-		
-		if (bFilterSoundBanks)
-		{
-			FilterSoundBank(bInside, Event.Value.GetSoundBank());
-		}
-		if (bFilterMedia)
-		{
-			const auto AllMedia = Event.Value.GetAllMedia(Shared.Db.GetMediaFiles());
-			for (auto Media: AllMedia)
+			if (++ProcessedCount % EventFilterCancellationCheckInterval == 0 && Shared.IsCancelled())
 			{
-				FilterMedia(bInside, Media.Value.GetMedia());	
+				return;
+			}
+
+			const bool bInside = PatternMatch(**Event.Value.EventName());
+			if (!bInside && !bIncludeSingleReferenceAssetsOnly)
+			{
+				continue;
+			}
+			
+			if (bFilterSoundBanks)
+			{
+				FilterSoundBank(bInside, Event.Value.GetSoundBank());
+			}
+			if (bFilterMedia)
+			{
+				const auto AllMedia = Event.Value.GetAllMedia(Shared.Db.GetMediaFiles());
+				for (auto Media: AllMedia)
+				{
+					FilterMedia(bInside, Media.Value.GetMedia());	
+				}
 			}
 		}
 	}
+	{
+		const WwiseDialogueEventGlobalIdsMap& Events = Shared.Db.GetDialogueEvents();
+		int32 ProcessedCount = 0;
+		for(const auto& Event: Events)
+		{
+			if (++ProcessedCount % EventFilterCancellationCheckInterval == 0 && Shared.IsCancelled())
+			{
+				return;
+			}
 
+			const bool bInside = PatternMatch(**Event.Value.DialogueEventName());
+			if (!bInside && !bIncludeSingleReferenceAssetsOnly)
+			{
+				continue;
+			}
+			
+			if (bFilterSoundBanks)
+			{
+				FilterSoundBank(bInside, Event.Value.GetSoundBank());
+			}
+			if (bFilterMedia)
+			{
+				const auto AllMedia = Event.Value.GetAllMedia(Shared.Db.GetMediaFiles());
+				for (auto Media: AllMedia)
+				{
+					FilterMedia(bInside, Media.Value.GetMedia());	
+				}
+			}
+		}
+	}
+	
 	if (bIncludeSingleReferenceAssetsOnly)
 	{
 		AdditionalMedia = AdditionalMedia.Difference(OutsideMedia);
@@ -195,9 +235,7 @@ bool UWwiseAssetLibraryEventFilter::IsAssetAvailable(const FWwiseAssetLibraryFil
 void UWwiseAssetLibraryEventFilter::PostFilter(const FWwiseAssetLibraryFilteringSharedData& Shared,
 	const FWwiseAssetLibraryInfo& AssetLibraryInfo)
 {
-	GlobFilters.Empty();
-	AdditionalMedia.Empty();
-	AdditionalSoundBank.Empty();
+	CleanUpTemporaryData();
 }
 
 void UWwiseAssetLibraryEventFilter::Reset(const FString& NewFilter, bool NewIncludeSingleReferenceAssetsOnly, bool NewUseRegex)
@@ -205,4 +243,13 @@ void UWwiseAssetLibraryEventFilter::Reset(const FString& NewFilter, bool NewIncl
 	Filter = NewFilter;
 	bIncludeSingleReferenceAssetsOnly = NewIncludeSingleReferenceAssetsOnly;
 	bUseRegex = NewUseRegex;
+}
+
+void UWwiseAssetLibraryEventFilter::CleanUpTemporaryData()
+{
+	GlobFilters.Empty();
+	AdditionalMedia.Empty();
+	AdditionalSoundBank.Empty();
+	OutsideMedia.Empty();
+	OutsideSoundBank.Empty();
 }

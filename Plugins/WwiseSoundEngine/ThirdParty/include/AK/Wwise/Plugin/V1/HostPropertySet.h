@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /**
@@ -51,20 +51,20 @@ the specific language governing permissions and limitations under the License.
  * You can also subscribe to notifications through ak_wwise_plugin_notifications_property_set_v1 in order to
  * be informed when some property set values changed.
  * 
- * \aknote
- * 		Most methods assume you acquired access to a platform as a GUID; either provided by the caller function,
- *		or retrieved through the Host interface.
- * 
- * 		The usual providers of this GUID are \ref ak_wwise_plugin_audio_plugin_v1::GetBankParameters
- * 		and \ref ak_wwise_plugin_audio_plugin_v1::GetPluginData method parameters.
- * 
- * 		You can also poll up-to-date GUIDs from \ref ak_wwise_plugin_host_v1 methods, such as
- * 		\ref ak_wwise_plugin_host_v1::GetCurrentPlatform.
- * 
- * 		Finally, you can also provide GUID_NULL as a parameter, which will access data for all platforms at
- * 		once (linked value). This is adequate only in certain cases where no platform-specific data is
- * 		possible for a value. Using the current platform is always the preferred method of access. 
- * \endaknote
+ * The methods in this interface which use in_guidPlatform as an input parameter assume that you have access to
+ * a Platform defined as a GUID, either provided by the caller function or retrieved through the
+ * Host interface.
+ *
+ * You can retrieve GUIDs in the following ways:
+ *
+ * - Use the in_guidPlatform provided as an input parameter in \ref ak_wwise_plugin_audio_plugin_v1::GetBankParameters
+ *   or \ref ak_wwise_plugin_custom_data_v1::GetPluginData
+ * - Poll the currently-active platform from \ref ak_wwise_plugin_host_v1::GetCurrentPlatform or
+ *   \ref ak_wwise_plugin_host_v1::GetAuthoringPlaybackPlatform
+ *
+ * You can also provide GUID_NULL as a parameter, which accesses data for all platforms at once
+ * as a linked value. However, GUID_NULL only works when no platform-specific data is possible
+ * for a value. Using the current platform is always the preferred access method.
  * 
  * \sa
  * - \ref wwiseplugin_xml_properties_tag
@@ -1082,9 +1082,9 @@ namespace AK::Wwise::Plugin
 			 * \akwarning
 			 * 		This is a semi-private function. You should use the typed GetValue methods instead.
 			 * 
-			 * 		\ref GetValueString, \ref GetValueInt64, \ref GetValueInt32, \ref GetValueInt16,
-			 *   	\ref GetValueInt8, \ref GetValueUInt64, \ref GetValueUInt32, \ref GetValueUInt16,
-			 *  	\ref GetValueUInt8, \ref GetValueReal64 \ref GetValueReal32, \ref GetValueBool
+			 * 		\ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueString, \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueInt64, \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueInt32, \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueInt16,
+			 *   	\ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueInt8, \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueUInt64, \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueUInt32, \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueUInt16,
+			 *  	\ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueUInt8, \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueReal64 \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueReal32, \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueBool
 			 * 
 			 * 		The function can still be useful if you want to handle parameters as a black box, getting a
 			 * 		value without knowing the type, and then setting that value elsewhere.
@@ -1119,18 +1119,18 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \akwarning
 			 * 		This is a semi-private function. You should use the typed SetValue methods instead.
 			 *
-			 * 		\ref SetValueString, \ref SetValueInt64, \ref SetValueInt32, \ref SetValueInt16,
-			 *   	\ref SetValueInt8, \ref SetValueUInt64, \ref SetValueUInt32, \ref SetValueUInt16,
-			 *  	\ref SetValueUInt8, \ref SetValueReal64 \ref SetValueReal32, \ref SetValueBool
+			 * 		\ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueString, \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueInt64, \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueInt32, \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueInt16,
+			 *   	\ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueInt8, \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueUInt64, \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueUInt32, \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueUInt16,
+			 *  	\ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueUInt8, \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueReal64 \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueReal32, \ref AK::Wwise::Plugin::V1::PropertySetBase::SetValueBool
 			 * 
 			 * 		The function can still be useful if you want to handle parameters as a black box, getting a
 			 * 		value without knowing the type, and then setting that value elsewhere.
@@ -1312,10 +1312,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1346,10 +1346,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1380,10 +1380,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1414,10 +1414,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1449,10 +1449,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1484,10 +1484,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1519,10 +1519,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1554,10 +1554,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1589,10 +1589,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1623,10 +1623,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1657,10 +1657,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -1691,10 +1691,10 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * \aknote
 			 * 		Your changes might be substantially altered or replaced if your property is bound to an RTPC
-			 * 		( \ref PropertyHasRTPC ) or a State ( \ref PropertyHasState ).
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasRTPC ) or a State ( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyHasState ).
 			 * 
 			 * 		More than one platform will be affected if the property is linked
-			 * 		( \ref PropertyPlatformIsLinked ); all platforms are linked by default.
+			 * 		( \ref AK::Wwise::Plugin::V1::PropertySetBase::PropertyPlatformIsLinked ); all platforms are linked by default.
 			 * \endaknote
 			 * 
 			 * \sa
@@ -2005,7 +2005,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Retrieves the string value of a specific property and returns the value as a temporary pointer.
 			 * 
-			 * This is a convenience for \ref GetValueString where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueString where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * The plug-in XML definition file should define this property as a \c string in order to use
@@ -2037,7 +2037,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 64-bit signed integer value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueInt64 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueInt64 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * The plug-in XML definition file should define this property as a \c int64 in order to use
@@ -2063,7 +2063,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 32-bit signed integer value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueInt32 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueInt32 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * The plug-in XML definition file should define this property as a \c int32 in order to use
@@ -2089,7 +2089,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 16-bit signed integer value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueInt16 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueInt16 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * The plug-in XML definition file should define this property as a \c int16 in order to use
@@ -2115,7 +2115,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 8-bit signed integer value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueInt8 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueInt8 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * \akwarning
@@ -2142,7 +2142,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 64-bit unsigned integer value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueUInt64 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueUInt64 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * \akwarning
@@ -2169,7 +2169,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 32-bit unsigned integer value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueUInt32 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueUInt32 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * \akwarning
@@ -2196,7 +2196,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 16-bit unsigned integer value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueUInt16 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueUInt16 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * \akwarning
@@ -2223,7 +2223,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 8-bit unsigned integer value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueUInt8 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueUInt8 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * \akwarning
@@ -2250,7 +2250,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 64-bit floating point value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueReal64 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueReal64 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * The plug-in XML definition file should define this property as a \c Real64 in order to use
@@ -2276,7 +2276,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the 32-bit floating point value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueReal32 where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueReal32 where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * The plug-in XML definition file should define this property as a \c Real32 in order to use
@@ -2302,7 +2302,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Returns the boolean value of a specific property.
 			 * 
-			 * This is a convenience for \ref GetValueBool where the value is returned instead of
+			 * This is a convenience for \ref AK::Wwise::Plugin::V1::PropertySetBase::GetValueBool where the value is returned instead of
 			 * being set in a provided variable.
 			 * 
 			 * The plug-in XML definition file should define this property as a \c bool in order to use
@@ -2337,7 +2337,7 @@ namespace AK::Wwise::Plugin
 			{
 			public:
 				/**
-				 * \copydoc CPropertySet_::Instance
+				 * \copydoc ak_wwise_plugin_notifications_property_set_v1::Instance
 				 */
 				using Instance = CPropertySet_::Instance;
 

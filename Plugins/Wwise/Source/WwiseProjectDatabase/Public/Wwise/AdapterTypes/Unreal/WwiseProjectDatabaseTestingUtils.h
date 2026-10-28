@@ -1,4 +1,4 @@
-﻿/*******************************************************************************
+/*******************************************************************************
 The content of this file includes portions of the proprietary AUDIOKINETIC Wwise
 Technology released in source code form as part of the game integration package.
 The content of this file may not be used without valid licenses to the
@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -29,6 +29,7 @@ Copyright (c) 2025 Audiokinetic Inc.
 #define PROJECT_DATABASE_TEST_CASE(PrettyName, tags) PROJECT_DATABASE_TEST_CASE_2(WWISE_TEST_CASE_PROJECT_DATABASE_NAME_2(WwiseProjectDatabaseTests_, __COUNTER__, __LINE__), PrettyName)
 #endif
 
+#if WWISE_UNIT_TESTS
 namespace WwiseProjectDatabaseLoggingUtils
 {
 	inline void ResetErrors(){}
@@ -40,3 +41,4 @@ namespace WwiseProjectDatabaseLoggingUtils
 		FAutomationTestFramework::Get().GetCurrentTest()->AddExpectedError(Message, EAutomationExpectedErrorFlags::Contains, occurences);
 	}
 }
+#endif // WWISE_UNIT_TESTS

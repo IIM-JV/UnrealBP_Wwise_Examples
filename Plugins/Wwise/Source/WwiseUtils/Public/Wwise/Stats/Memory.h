@@ -12,18 +12,26 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 
 #include "HAL/LowLevelMemStats.h"
 #include "Stats/Stats.h"
+#include "Wwise/WwiseUnrealVersion.h"
 
 DECLARE_STATS_GROUP(TEXT("Memory"), STATGROUP_WwiseMemory, STATCAT_Wwise);
 
 #if ENABLE_LOW_LEVEL_MEM_TRACKER
-#define WWISE_LLM_GET_NAME(TagDeclName) PREPROCESSOR_JOIN(LLMTagDeclaration_, TagDeclName).GetUniqueName()
+
+#if UE_5_8_OR_LATER
+#define WWISE_JOIN(A,B) UE_JOIN(A,B)
+#else
+#define WWISE_JOIN(A,B) PREPROCESSOR_JOIN(A,B)
+#endif
+
+#define WWISE_LLM_GET_NAME(TagDeclName) WWISE_JOIN(LLMTagDeclaration_, TagDeclName).GetUniqueName()
 #else
 #define WWISE_LLM_GET_NAME(TagDeclName) FName{}
 #endif

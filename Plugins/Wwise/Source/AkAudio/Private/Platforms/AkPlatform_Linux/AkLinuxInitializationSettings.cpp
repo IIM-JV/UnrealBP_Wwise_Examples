@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Platforms/AkPlatform_Linux/AkLinuxInitializationSettings.h"
@@ -28,7 +28,9 @@ UAkLinuxInitializationSettings::UAkLinuxInitializationSettings(const FObjectInit
 
 void UAkLinuxInitializationSettings::FillInitializationStructure(FAkInitializationStructure& InitializationStructure) const
 {
-#if PLATFORM_64BITS
+#if UE_5_8_OR_LATER
+	InitializationStructure.SetPluginDllPath("Linux_x64");
+#elif PLATFORM_64BITS
 	InitializationStructure.SetPluginDllPath("Linux_x64");
 #else
 	ensure(!"The Wwise Unreal Engine integration does not support 32-bit Linux distributions.");

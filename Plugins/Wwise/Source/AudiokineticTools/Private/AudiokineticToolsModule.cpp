@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -98,6 +98,7 @@ Copyright (c) 2025 Audiokinetic Inc.
 #include "AssetManagement/StaticPluginWriter.h"
 #include "DetailsCustomization/WwiseDetailsCustomization.h"
 #include "Wwise/WwisePluginStyle.h"
+#include "Wwise/Packaging/WwisePackagingSettings.h"
 
 #include "WwiseInitBankLoader/WwiseInitBankLoader.h"
 
@@ -107,6 +108,8 @@ DEFINE_LOG_CATEGORY(LogAudiokineticTools);
 IMPLEMENT_MODULE(FAudiokineticToolsModule, AudiokineticTools);
 
 FAudiokineticToolsModule* FAudiokineticToolsModule::AudiokineticToolsModuleInstance = nullptr;
+std::atomic<bool> FAudiokineticToolsModule::bIsShuttingDown{false};
+std::atomic<int32> FAudiokineticToolsModule::ActiveAsyncOperations{0};
 
 
 TSharedRef<SDockTab> FAudiokineticToolsModule::CreateWwiseBrowserTab(const FSpawnTabArgs& SpawnTabArgs)
@@ -124,10 +127,7 @@ TSharedRef<SDockTab> FAudiokineticToolsModule::CreateWwiseBrowserTab(const FSpaw
 void FAudiokineticToolsModule::RefreshWwiseProject()
 {
 	SoundBanksDirectoryWatcher.ConditionalRestartWatchers();
-	if (auto* ProjectDatabase = FWwiseProjectDatabase::Get())
-	{
-		ProjectDatabase->UpdateDataStructure();
-	}
+	FAkAudioModule::ParseGeneratedSoundBankDataAsync();
 }
 
 void FAudiokineticToolsModule::OpenOnlineHelp()
@@ -183,7 +183,12 @@ void FAudiokineticToolsModule::CreateAkViewportCommands()
 {
 	// Extend the viewport menu and add the Audiokinetic commands
 	{
+#ifdef UE_5_6_OR_LATER
+		UToolMenu* ViewportMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelViewportToolBar.Show");
+#else
 		UToolMenu* ViewportMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelViewportToolBar.Options");
+#endif
+
 		FToolMenuSection& AkSection = ViewportMenu->AddSection("Audiokinetic", LOCTEXT("AkLabel", "Audiokinetic"), FToolMenuInsert("Audiokinetic", EToolMenuInsertType::Default));
 
 		ToggleVizRoomsPortalsAction.ExecuteAction.BindStatic(&FAudiokineticToolsModule::ToggleVisualizeRoomsAndPortals);
@@ -484,12 +489,109 @@ void FAudiokineticToolsModule::VerifyGeneratedSoundBanksPath(UAkSettings* AkSett
 	}
 }
 
+void FAudiokineticToolsModule::VerifyLibraryGroups(UWwisePackagingSettings* WwisePackagingSettings)
+{
+	if (WwisePackagingSettings->ShouldPromptInitialAssetLibraryGroups() && FApp::CanEverRender())
+	{
+		{
+			TSharedPtr<SWindow> Dialog = SNew(SWindow)
+				.Title(LOCTEXT("CreateLibraryGroup", "Create Wwise Library Groups"))
+				.SupportsMaximize(false)
+				.SupportsMinimize(false)
+				.FocusWhenFirstShown(true)
+				.ClientSize(FVector2D(650.f, 125.f))
+				.SizingRule(ESizingRule::FixedSize);
+
+			TSharedRef<SWidget> DialogContent = SNew(SVerticalBox)
+				+ SVerticalBox::Slot()
+				.FillHeight(0.25f)
+				[
+					SNew(SSpacer)
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(20.0f, 0.0f)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("WwiseLibraryGroupInfo_1", "Asset Libraries are now packaged in Library Groups instead of the Project Settings.\n Asset Libraries require Library Groups to work, but there are currently no associated Library Groups.\n Would you like to create them? (Library Groups will be created in the root Gameplay Modules)\n Make sure to verify the order of your libraries in the created Library Groups."))
+					.AutoWrapText(true)
+					.Justification(ETextJustify::Center)
+				]
+				+ SVerticalBox::Slot()
+				.Padding(175.0f, 0.0f)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("WwiseLibraryGroupInfo_2", "For more information, please refer to the "))
+						.AutoWrapText(true)
+						.Justification(ETextJustify::Center)
+					]
+					+SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SHyperlink)
+						.OnNavigate_Lambda([&]()  {
+							FPlatformProcess::LaunchFileInDefaultExternalApplication(TEXT("https://www.audiokinetic.com/library/?source=UE4&id=using_features_package_as_bulk_data.html"));
+						})
+						.Text(LOCTEXT("WwiseOpenPackagingDoc", "Documentation"))
+					]
+				]
+				+ SVerticalBox::Slot()
+				.FillHeight(1.2f)
+				[
+					SNew(SSpacer)
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.FillWidth(1.0f)
+					[
+						SNew(SSpacer)
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(0.0f, 3.0f, 0.0f, 3.0f)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("Yes", "Yes"))
+						.OnClicked_Lambda([&]() -> FReply {
+							WwisePackagingSettings->CreateInitialAssetLibraryGroups();
+							Dialog->RequestDestroyWindow();
+							return FReply::Handled();
+						})
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(0.0f, 3.0f, 2.0f, 3.0f)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("No", "No"))
+						.OnClicked_Lambda([&]() -> FReply {
+							WwisePackagingSettings->bMigratedToLibraryGroup = true;
+							WwisePackagingSettings->SaveConfigFile();
+							Dialog->RequestDestroyWindow();
+							return FReply::Handled();
+						})
+					]
+				];
+
+			Dialog->SetContent(DialogContent);
+			FSlateApplication::Get().AddModalWindow(Dialog.ToSharedRef(), nullptr);
+		}
+	}
+}
+
 void FAudiokineticToolsModule::OnAssetRegistryFilesLoaded()
 {
 	UAkSettings* AkSettings = GetMutableDefault<UAkSettings>();
 	UAkSettingsPerUser* AkSettingsPerUser = GetMutableDefault<UAkSettingsPerUser>();
+	UWwisePackagingSettings* WwisePackagingSettings = GetMutableDefault<UWwisePackagingSettings>();
 	auto* CurrentProject = IProjectManager::Get().GetCurrentProject();
-	bool doModifyProject = true;
 
 	WwiseProjectInfo wwiseProjectInfo;
 	wwiseProjectInfo.Parse();
@@ -506,8 +608,12 @@ void FAudiokineticToolsModule::OnAssetRegistryFilesLoaded()
 	AkSettings->InitReverbAssignmentTable();
 	AkSettings->EnsurePluginContentIsInAlwaysCook();
 
-	AkAcousticTextureParamLookup AcousticTextureParamLookup;
-	AcousticTextureParamLookup.UpdateParamsMap();
+	FWwiseProjectDatabase* ProjectDatabase = FWwiseProjectDatabase::Get();
+	if (ProjectDatabase && ProjectDatabase->IsProjectDatabaseParsed())
+	{
+		AkAcousticTextureParamLookup AcousticTextureParamLookup;
+		AcousticTextureParamLookup.UpdateParamsMap();
+	}
 
 	if (!IsRunningCommandlet() )
 	{
@@ -525,16 +631,17 @@ void FAudiokineticToolsModule::OnAssetRegistryFilesLoaded()
 	if (CurrentProject && AkSettings && AkSettingsPerUser)
 	{
 		VerifyGeneratedSoundBanksPath(AkSettings, AkSettingsPerUser);
-
-		if (doModifyProject)
-		{
-			AssetMigrationManager.SetStandardProjectSettings();
-		}
+	}
+	if (WwisePackagingSettings)
+	{
+		VerifyLibraryGroups(WwisePackagingSettings);
 	}
 }
 
 void FAudiokineticToolsModule::StartupModule()
 {
+	bIsShuttingDown = false;
+	
 	AudiokineticToolsModuleInstance = this;
 	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 	{
@@ -544,9 +651,11 @@ void FAudiokineticToolsModule::StartupModule()
 		AkAssetTypeActionsArray =
 		{
 			MakeShared<FAssetTypeActions_AkAudioEvent>(AudiokineticAssetCategoryBit),
+			MakeShared<FAssetTypeActions_AkAudioNode>(AudiokineticAssetCategoryBit),
 			MakeShared<FAssetTypeActions_AkAcousticTexture>(AudiokineticAssetCategoryBit),
 			MakeShared<FAssetTypeActions_AkAuxBus>(AudiokineticAssetCategoryBit),
-			MakeShared<FAssetTypeActions_AkRtpc>(AudiokineticAssetCategoryBit),
+			MakeShared<FAssetTypeActions_AkDialogueEvent>(AudiokineticAssetCategoryBit),
+			MakeShared<FAssetTypeActions_AkGameParameter>(AudiokineticAssetCategoryBit),
 			MakeShared<FAssetTypeActions_AkTrigger>(AudiokineticAssetCategoryBit),
 			MakeShared<FAssetTypeActions_AkSwitchValue>(AudiokineticAssetCategoryBit),
 			MakeShared<FAssetTypeActions_AkStateValue>(AudiokineticAssetCategoryBit),
@@ -561,25 +670,42 @@ void FAudiokineticToolsModule::StartupModule()
 		RegisterWwiseMenus();
 		CreateAkViewportCommands();
 	}
+	
+	EWwiseProjectDatabaseLoadMode LoadMode = EWwiseProjectDatabaseLoadMode::Synchronous;
+	if (const auto* UserSettings = GetDefault<UAkSettingsPerUser>())
+	{
+		LoadMode = UserSettings->ProjectDatabaseLoadMode;
+	}
 
-	RegisterSettings();
+	switch (LoadMode)
+	{
+	case EWwiseProjectDatabaseLoadMode::Synchronous:
+		RegisterSettings();
+		CompleteInitialization();
+		break;
 
-	AkEventBroker = MakeShared<FAkEventAssetBroker>();
-	FComponentAssetBrokerage::RegisterBroker(AkEventBroker, UAkComponent::StaticClass(), true, true);
+	case EWwiseProjectDatabaseLoadMode::Asynchronous:
+	default:
+		RegisterCoreSettings();
+		
+		Async(EAsyncExecution::ThreadPool, [this]()
+		{
+			++ActiveAsyncOperations;
+			RegisterPlatformSettings();
+			--ActiveAsyncOperations;
 
-	auto& TabSpawnerEntry = FGlobalTabmanager::Get()->RegisterNomadTabSpawner(SWwiseBrowser::WwiseBrowserTabName, FOnSpawnTab::CreateRaw(this, &FAudiokineticToolsModule::CreateWwiseBrowserTab))
-		.SetDisplayName(NSLOCTEXT("FAudiokineticToolsModule", "BrowserTabTitle", "Wwise Browser"))
-		.SetTooltipText(NSLOCTEXT("FAudiokineticToolsModule", "BrowserTooltipText", "Open the Wwise Browser tab."))
-		.SetGroup(WorkspaceMenu::GetMenuStructure().GetLevelEditorCategory())
-		.SetIcon(FSlateIcon(FWwisePluginStyle::Get()->GetStyleSetName(), FWwisePluginStyle::WwiseIconName));
-
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	OnAssetRegistryFilesLoadedHandle = AssetRegistryModule.Get().OnFilesLoaded().AddRaw(this, &FAudiokineticToolsModule::OnAssetRegistryFilesLoaded);
-
-	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>(TEXT("Sequencer"));
-	RTPCTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FMovieSceneWwiseGameParameterTrackEditor::CreateTrackEditor));
-	EventTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FMovieSceneAkAudioEventTrackEditor::CreateTrackEditor));
-
+			FWwiseProjectDatabase* ProjectDatabase = FWwiseProjectDatabase::Get();
+			if (!IWwiseProjectDatabaseModule::ShouldInitializeProjectDatabase() || (ProjectDatabase && ProjectDatabase->IsProjectDatabaseParsed()))
+			{
+				CompleteInitializationOnGameThread();
+			}
+			else
+			{
+				OnDatabaseUpdateCompleteInitializationHandle = FWwiseProjectDatabaseDelegates::Get()->GetOnDatabaseUpdateCompletedDelegate().AddRaw(this, &FAudiokineticToolsModule::OnDatabaseParsedForCompleteInitialization);
+			}
+		});
+		break;
+	}
 	// Since we are initialized in the PostEngineInit phase, our Ambient Sound actor factory is not registered. We need to register it ourselves.
 	if (GEditor)
 	{
@@ -615,8 +741,13 @@ void FAudiokineticToolsModule::StartupModule()
 	}
 
 
-	//Project Database initial parse occurs before AudiokineticTools' Initialization. Call it here manually.
-	SetStaticPluginsInformation();
+	{
+		FWwiseProjectDatabase* ProjectDatabase = FWwiseProjectDatabase::Get();
+		if (ProjectDatabase && ProjectDatabase->IsProjectDatabaseParsed())
+		{
+			SetStaticPluginsInformation();
+		}
+	}
 	StaticPluginHandle = FWwiseProjectDatabaseDelegates::Get()->GetOnDatabaseUpdateCompletedDelegate().AddLambda(
 		[this]()
 		{
@@ -626,6 +757,56 @@ void FAudiokineticToolsModule::StartupModule()
 	);
 	
 	FEditorDelegates::BeginPIE.AddRaw(this, &FAudiokineticToolsModule::BeginPIE);
+}
+
+void FAudiokineticToolsModule::CompleteInitializationOnGameThread()
+{
+	AsyncTask(ENamedThreads::GameThread, [this]()
+	{
+		if (bIsShuttingDown)
+		{
+			UE_LOG(LogAudiokineticTools, Log, TEXT("FAudiokineticToolsModule: Async initialization aborted - module is shutting down."));
+			return;
+		}
+		CompleteInitialization();
+	});
+}
+
+void FAudiokineticToolsModule::OnDatabaseParsedForCompleteInitialization()
+{
+	if (FWwiseProjectDatabaseDelegates* Delegates = FWwiseProjectDatabaseDelegates::Get())
+	{
+		Delegates->GetOnDatabaseUpdateCompletedDelegate().Remove(OnDatabaseUpdateCompleteInitializationHandle);
+	}
+	OnDatabaseUpdateCompleteInitializationHandle.Reset();
+
+	CompleteInitializationOnGameThread();
+}
+
+void FAudiokineticToolsModule::CompleteInitialization()
+{
+	AkEventBroker = MakeShared<FAkEventAssetBroker>();
+	FComponentAssetBrokerage::RegisterBroker(AkEventBroker, UAkComponent::StaticClass(), true, true);
+
+	auto& TabSpawnerEntry = FGlobalTabmanager::Get()->RegisterNomadTabSpawner(SWwiseBrowser::WwiseBrowserTabName, FOnSpawnTab::CreateRaw(this, &FAudiokineticToolsModule::CreateWwiseBrowserTab))
+		.SetDisplayName(NSLOCTEXT("FAudiokineticToolsModule", "BrowserTabTitle", "Wwise Browser"))
+		.SetTooltipText(NSLOCTEXT("FAudiokineticToolsModule", "BrowserTooltipText", "Open the Wwise Browser tab."))
+		.SetGroup(WorkspaceMenu::GetMenuStructure().GetLevelEditorCategory())
+		.SetIcon(FSlateIcon(FWwisePluginStyle::Get()->GetWwisePluginStyleSetName(), FWwisePluginStyle::WwiseIconName));
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	if (AssetRegistryModule.Get().IsLoadingAssets())
+	{
+		OnAssetRegistryFilesLoadedHandle = AssetRegistryModule.Get().OnFilesLoaded().AddRaw(this, &FAudiokineticToolsModule::OnAssetRegistryFilesLoaded);
+	}
+	else
+	{
+		OnAssetRegistryFilesLoaded();
+	}
+
+	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>(TEXT("Sequencer"));
+	RTPCTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FMovieSceneWwiseGameParameterTrackEditor::CreateTrackEditor));
+	EventTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FMovieSceneAkAudioEventTrackEditor::CreateTrackEditor));
 }
 
 void FAudiokineticToolsModule::OnAkAudioInit()
@@ -717,11 +898,30 @@ void FAudiokineticToolsModule::OpenAssetReloadPopup()
 
 void FAudiokineticToolsModule::ParseGeneratedSoundBankData()
 {
-	FAkAudioModule::ParseGeneratedSoundBankData();
+	FAkAudioModule::ParseGeneratedSoundBankDataAsync();
 }
 
 void FAudiokineticToolsModule::ShutdownModule()
 {
+	bIsShuttingDown = true;
+	
+	// Wait for any active async operations to complete
+	if (ActiveAsyncOperations > 0)
+	{
+		UE_LOG(LogAudiokineticTools, Log, TEXT("FAudiokineticToolsModule::ShutdownModule: Waiting for %d active async operation(s) to complete..."), ActiveAsyncOperations.load());
+		
+		
+		while (ActiveAsyncOperations > 0)
+		{
+			FPlatformProcess::Sleep(0.01f);
+		}
+		
+		if (ActiveAsyncOperations == 0)
+		{
+			UE_LOG(LogAudiokineticTools, Log, TEXT("FAudiokineticToolsModule::ShutdownModule: All async operations completed. Shutting down."));
+		}
+	}
+	
 	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 	{
 		auto& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
@@ -747,7 +947,27 @@ void FAudiokineticToolsModule::ShutdownModule()
 		}
 	}
 	LevelViewportToolbarBuildMenuExtenderAkHandle.Reset();
-	StaticPluginHandle.Reset();
+	if (StaticPluginHandle.IsValid())
+	{
+		if (FWwiseProjectDatabaseDelegates* Delegates = FWwiseProjectDatabaseDelegates::Get())
+		{
+			Delegates->GetOnDatabaseUpdateCompletedDelegate().Remove(StaticPluginHandle);
+		}
+		StaticPluginHandle.Reset();
+	}
+	if (OnTargetPlatformsForCurrentProjectChangedHandle.IsValid())
+	{
+		IProjectManager::Get().OnTargetPlatformsForCurrentProjectChanged().Remove(OnTargetPlatformsForCurrentProjectChangedHandle);
+		OnTargetPlatformsForCurrentProjectChangedHandle.Reset();
+	}
+	if (OnDatabaseUpdatePlatformSettingsHandle.IsValid())
+	{
+		if (FWwiseProjectDatabaseDelegates* Delegates = FWwiseProjectDatabaseDelegates::Get())
+		{
+			Delegates->GetOnDatabaseUpdateCompletedDelegate().Remove(OnDatabaseUpdatePlatformSettingsHandle);
+		}
+		OnDatabaseUpdatePlatformSettingsHandle.Reset();
+	}
 	UnregisterSettings();
 
 	if (GUnrealEd != NULL)
@@ -799,8 +1019,29 @@ void FAudiokineticToolsModule::ShutdownModule()
 
 	if (OnDatabaseUpdateTextureHandle.IsValid())
 	{
-		FWwiseProjectDatabaseDelegates::Get()->GetOnDatabaseUpdateCompletedDelegate().Remove(OnDatabaseUpdateTextureHandle);
+		if (FWwiseProjectDatabaseDelegates* Delegates = FWwiseProjectDatabaseDelegates::Get())
+		{
+			Delegates->GetOnDatabaseUpdateCompletedDelegate().Remove(OnDatabaseUpdateTextureHandle);
+		}
 		OnDatabaseUpdateTextureHandle.Reset();
+	}
+
+	if (OnDatabaseUpdateCompleteHandle.IsValid())
+	{
+		if (FWwiseProjectDatabaseDelegates* Delegates = FWwiseProjectDatabaseDelegates::Get())
+		{
+			Delegates->GetOnDatabaseUpdateCompletedDelegate().Remove(OnDatabaseUpdateCompleteHandle);
+		}
+		OnDatabaseUpdateCompleteHandle.Reset();
+	}
+
+	if (OnDatabaseUpdateCompleteInitializationHandle.IsValid())
+	{
+		if (FWwiseProjectDatabaseDelegates* Delegates = FWwiseProjectDatabaseDelegates::Get())
+		{
+			Delegates->GetOnDatabaseUpdateCompletedDelegate().Remove(OnDatabaseUpdateCompleteInitializationHandle);
+		}
+		OnDatabaseUpdateCompleteInitializationHandle.Reset();
 	}
 
 #if WITH_EDITOR
@@ -839,24 +1080,37 @@ EEditorBuildResult FAudiokineticToolsModule::BuildAkEventData(UWorld* world, FNa
 	}
 }
 
-TMap<FString, SettingsRegistrationStruct>& FAudiokineticToolsModule::GetWwisePlatformNameToSettingsRegistrationMap()
+TMap<FString, SettingsRegistrationStruct> FAudiokineticToolsModule::GetCoreSettingsRegistrationMap()
 {
-	static TMap<FString, SettingsRegistrationStruct> WwisePlatformNameToWwiseSettingsRegistrationMap;
-	if (WwisePlatformNameToWwiseSettingsRegistrationMap.Num() == 0)
+	TMap<FString, SettingsRegistrationStruct> CoreSettingsMap;
+	
+	auto RegisterIntegrationSettings = SettingsRegistrationStruct(UAkSettings::StaticClass(),
+		"Integration",
+		LOCTEXT("WwiseIntegrationSettingsName", "Integration Settings"),
+		LOCTEXT("WwiseIntegrationSettingsDescription", "Configure the Wwise Integration"));
+
+	auto RegisterPerUserSettings = SettingsRegistrationStruct(UAkSettingsPerUser::StaticClass(),
+		"User Settings",
+		LOCTEXT("WwiseRuntimePerUserSettingsName", "User Settings"),
+		LOCTEXT("WwiseRuntimePerUserSettingsDescription", "Configure the Wwise Integration per user"));
+
+	CoreSettingsMap.Add(FString("Integration"), RegisterIntegrationSettings);
+	CoreSettingsMap.Add(FString("User"), RegisterPerUserSettings);
+	
+	return CoreSettingsMap;
+}
+
+TMap<FString, SettingsRegistrationStruct> FAudiokineticToolsModule::WwisePlatformNameToWwiseSettingsRegistrationMap;
+bool FAudiokineticToolsModule::bPlatformSettingsPopulated = false;
+
+void FAudiokineticToolsModule::RefreshWwisePlatformNameToSettingsRegistrationMap()
+{
+	const FWwiseProjectDatabase* ProjectDatabase = FWwiseProjectDatabase::Get();
+	const bool bDatabaseReady = ProjectDatabase && ProjectDatabase->IsProjectDatabaseParsed();
+
+	if (WwisePlatformNameToWwiseSettingsRegistrationMap.Num() == 0 || (!bPlatformSettingsPopulated && bDatabaseReady))
 	{
-		auto RegisterIntegrationSettings = SettingsRegistrationStruct(UAkSettings::StaticClass(),
-			"Integration",
-			LOCTEXT("WwiseIntegrationSettingsName", "Integration Settings"),
-			LOCTEXT("WwiseIntegrationSettingsDescription", "Configure the Wwise Integration"));
-
-		auto RegisterPerUserSettings = SettingsRegistrationStruct(UAkSettingsPerUser::StaticClass(),
-			"User Settings",
-			LOCTEXT("WwiseRuntimePerUserSettingsName", "User Settings"),
-			LOCTEXT("WwiseRuntimePerUserSettingsDescription", "Configure the Wwise Integration per user"));
-
-		WwisePlatformNameToWwiseSettingsRegistrationMap.Add(FString("Integration"), RegisterIntegrationSettings);
-		WwisePlatformNameToWwiseSettingsRegistrationMap.Add(FString("User"), RegisterPerUserSettings);
-
+		WwisePlatformNameToWwiseSettingsRegistrationMap = GetCoreSettingsRegistrationMap();
 		for (const auto& AvailablePlatform : AkUnrealPlatformHelper::GetAllWwiseProjectPlatforms())
 		{
 			FString SettingsClassName = FString::Format(TEXT("/Script/AkAudio.Ak{0}InitializationSettings"), { *AvailablePlatform });
@@ -879,23 +1133,41 @@ TMap<FString, SettingsRegistrationStruct>& FAudiokineticToolsModule::GetWwisePla
 				WwisePlatformNameToWwiseSettingsRegistrationMap.Add(*AvailablePlatform, RegisterPlatform);
 			}
 		}
+		bPlatformSettingsPopulated = bDatabaseReady;
 	}
-	return WwisePlatformNameToWwiseSettingsRegistrationMap;
 }
 
-void FAudiokineticToolsModule::RegisterSettings()
+void FAudiokineticToolsModule::RegisterCoreSettings()
+{
+	if (auto SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	{
+		auto CoreSettingsMap = GetCoreSettingsRegistrationMap();
+		
+		for (const auto& SettingsPair : CoreSettingsMap)
+		{
+			const FString& SettingsName = SettingsPair.Key;
+			if (!RegisteredSettingsNames.Contains(SettingsName))
+			{
+				SettingsPair.Value.Register(SettingsModule);
+				RegisteredSettingsNames.Add(SettingsName);
+			}
+		}
+	}
+}
+
+void FAudiokineticToolsModule::RegisterPlatformSettings()
 {
 	if (auto SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		auto UpdatePlatformSettings = [SettingsModule, this]
 		{
-			auto SettingsRegistrationMap = GetWwisePlatformNameToSettingsRegistrationMap();
+			RefreshWwisePlatformNameToSettingsRegistrationMap();
 
 			TSet<FString> SettingsThatShouldBeRegistered = { FString("Integration"), FString("User") };
 
 			for (const auto& AvailablePlatform : AkUnrealPlatformHelper::GetAllWwiseProjectPlatforms())
 			{
-				if (SettingsRegistrationMap.Contains(AvailablePlatform))
+				if (WwisePlatformNameToWwiseSettingsRegistrationMap.Contains(AvailablePlatform))
 				{
 					SettingsThatShouldBeRegistered.Add(AvailablePlatform);
 				}
@@ -904,7 +1176,7 @@ void FAudiokineticToolsModule::RegisterSettings()
 			auto SettingsToBeUnregistered = RegisteredSettingsNames.Difference(SettingsThatShouldBeRegistered);
 			for (const auto& SettingsName : SettingsToBeUnregistered)
 			{
-				SettingsRegistrationMap[SettingsName].Unregister(SettingsModule);
+				WwisePlatformNameToWwiseSettingsRegistrationMap[SettingsName].Unregister(SettingsModule);
 				RegisteredSettingsNames.Remove(SettingsName);
 			}
 
@@ -914,7 +1186,7 @@ void FAudiokineticToolsModule::RegisterSettings()
 				if (RegisteredSettingsNames.Contains(SettingsName))
 					continue;
 
-				SettingsRegistrationMap[SettingsName].Register(SettingsModule);
+				WwisePlatformNameToWwiseSettingsRegistrationMap[SettingsName].Register(SettingsModule);
 				RegisteredSettingsNames.Add(SettingsName);
 			}
 		};
@@ -922,18 +1194,31 @@ void FAudiokineticToolsModule::RegisterSettings()
 		UpdatePlatformSettings();
 
 		IProjectManager& ProjectManager = IProjectManager::Get();
-		ProjectManager.OnTargetPlatformsForCurrentProjectChanged().AddLambda(UpdatePlatformSettings);
+		OnTargetPlatformsForCurrentProjectChangedHandle = ProjectManager.OnTargetPlatformsForCurrentProjectChanged().AddLambda(UpdatePlatformSettings);
+
+		if (FWwiseProjectDatabase* ProjectDatabase = FWwiseProjectDatabase::Get())
+		{
+			if (!ProjectDatabase->IsProjectDatabaseParsed())
+			{
+				OnDatabaseUpdatePlatformSettingsHandle = FWwiseProjectDatabaseDelegates::Get()->GetOnDatabaseUpdateCompletedDelegate().AddLambda(UpdatePlatformSettings);
+			}
+		}
 	}
+}
+
+void FAudiokineticToolsModule::RegisterSettings()
+{
+	RegisterCoreSettings();
+	RegisterPlatformSettings();
 }
 
 void FAudiokineticToolsModule::UnregisterSettings()
 {
 	if (auto SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
-		auto SettingsRegistrationMap = GetWwisePlatformNameToSettingsRegistrationMap();
 		for (const auto& SettingsName : RegisteredSettingsNames)
 		{
-			SettingsRegistrationMap[SettingsName].Unregister(SettingsModule);
+			WwisePlatformNameToWwiseSettingsRegistrationMap[SettingsName].Unregister(SettingsModule);
 		}
 		RegisteredSettingsNames.Empty();
 	}

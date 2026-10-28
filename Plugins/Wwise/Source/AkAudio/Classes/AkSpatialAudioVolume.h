@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -135,13 +135,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Fit to Geometry", meta = (ClampMin = 0.1875f, ClampMax = 1.0f))
 	float FilterHitPoints = 1.0f;
 
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TArray<FVector> FitPoints;
 	
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TArray<FVector> FitNormals;
 
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TArray< TWeakObjectPtr<class UPhysicalMaterial> > FitMaterials;
 	
 	UPROPERTY()

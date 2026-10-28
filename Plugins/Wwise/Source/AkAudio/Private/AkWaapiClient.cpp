@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /*=============================================================================
@@ -29,11 +29,14 @@ Copyright (c) 2025 Audiokinetic Inc.
 #include "AkAudioDevice.h"
 #include "AkSettings.h"
 #include "AkSettingsPerUser.h"
+#include "AkWaapiUtils.h"
 #include "WwiseUnrealDefines.h"
 #include "Serialization/JsonSerializer.h"
 #include "Async/Async.h"
 #include "Misc/ScopeLock.h"
 #include "Misc/CoreDelegates.h"
+
+#include <atomic>
 
 #if AK_SUPPORT_WAAPI
 #include "Wwise/API/WAAPI.h"
@@ -54,12 +57,54 @@ typedef AK::WwiseAuthoringAPI::JsonProvider JsonProvider;
 Statics and Globals
 ------------------------------------------------------------------------------------*/
 FAkWaapiClient* g_AkWaapiClient = nullptr;
+static std::atomic<bool> g_bSoundBankGenerationInProgress{ false };
+
+// Set for the duration of AkSoundBankGenerationManager::WAAPIGenerate() on the background
+// thread it runs on, so its own generationDone Subscribe/Unsubscribe calls aren't rejected
+// by the g_bSoundBankGenerationInProgress fast-path check below.
+static thread_local bool t_bAllowWaapiOnThisThreadDuringGeneration = false;
+
+class FScopedClientLockWithTimeout
+{
+public:
+	FScopedClientLockWithTimeout(FCriticalSection& InSection, int TimeoutMs)
+		: Section(InSection)
+	{
+		if (TimeoutMs < 0)
+		{
+			Section.Lock();
+			bLocked = true;
+			return;
+		}
+		const double StartSeconds = FPlatformTime::Seconds();
+		const double TimeoutSeconds = TimeoutMs / 1000.0;
+		while (!(bLocked = Section.TryLock()))
+		{
+			if (FPlatformTime::Seconds() - StartSeconds >= TimeoutSeconds)
+			{
+				break;
+			}
+			FPlatformProcess::Sleep(0.001f);
+		}
+	}
+	~FScopedClientLockWithTimeout()
+	{
+		if (bLocked)
+		{
+			Section.Unlock();
+		}
+	}
+	bool IsLocked() const { return bLocked; }
+private:
+	FCriticalSection& Section;
+	bool bLocked = false;
+};
 
 /*------------------------------------------------------------------------------------
 FAkWaapiClientConnectionHandler
 ------------------------------------------------------------------------------------*/
 
-FAkWaapiClientConnectionHandler::FAkWaapiClientConnectionHandler(FAkWaapiClient& in_Client) : m_Client(in_Client)
+FAkWaapiClientConnectionHandler::FAkWaapiClientConnectionHandler()
 {
 	WaitEvent = FPlatformProcess::GetSynchEventFromPool(true);
 }
@@ -72,18 +117,33 @@ FAkWaapiClientConnectionHandler::~FAkWaapiClientConnectionHandler()
 
 void FAkWaapiClientConnectionHandler::RegisterAutoConnectChangedCallback()
 {
-#if WITH_EDITOR
+#if WITH_EDITOR && AK_SUPPORT_WAAPI
 	FScopeLock Lock(&AkSettingsSection);
 	if (auto AkSettingsPerUser = GetDefault<UAkSettingsPerUser>())
 	{
 		AutoConnectChangedHandle = AkSettingsPerUser->OnAutoConnectToWaapiChanged.AddLambda([this, AkSettingsPerUser]()
 		{
 			ResetReconnectionDelay();
-			if (AkSettingsPerUser->bAutoConnectToWAAPI)
+			if (AkSettingsPerUser->AutoConnectToWAAPI)
+			{
 				WaitEvent->Trigger();
+				auto* WAAPI = IWAAPI::Get();
+				if (UNLIKELY(!WAAPI))
+				{
+					UE_LOG(LogAkAudio, Display, TEXT("WAAPI client is disabled. WAAPI is unavailable."));
+				}
+				else
+				{
+					FAkWaapiClient::Initialize();
+				}
+			}
 			else
 			{
-				m_Client.BroadcastConnectionLost();
+				auto m_Client = FAkWaapiClient::Get();
+				if (m_Client)
+				{
+					m_Client->BroadcastConnectionLost();
+				}
 			}
 		});
 	}
@@ -107,26 +167,40 @@ uint32 FAkWaapiClientConnectionHandler::Run()
 	checkf(!IsInGameThread(), TEXT("FAkWaapiClientConnectionHandler::Run: Cannot be run in Game Thread."));
 	while (!ThreadShouldExit)
 	{
-		if (!m_Client.IsProjectLoaded())
+		auto m_Client = FAkWaapiClient::Get();
+		if (!m_Client)
+		{
+			UE_LOG(LogAkAudio, Warning,
+			       TEXT(
+				       "FAkWaapiClientConnectionHandler::Run: Shutting down Waapi Connection Handler. Waapi Client is not available."
+			       ))
+			ThreadShouldExit = true;
+			break;
+		}
+		if (!m_Client->IsProjectLoaded())
 		{
 			/** Check if we should attempt to reconnect according to the Wwise Plugin Settings. */
-			bool bReconnect = !m_Client.IsDisconnecting() && !m_Client.AppIsExiting();
+			bool bReconnect = !m_Client->IsDisconnecting() && !m_Client->AppIsExiting();
 			{
 				FScopeLock Lock(&AkSettingsSection);
 				if (auto AkSettingsPerUser = GetDefault<UAkSettingsPerUser>())
 				{
-					bReconnect = AkSettingsPerUser->bAutoConnectToWAAPI;
+					bReconnect = AkSettingsPerUser->AutoConnectToWAAPI;
 				}
 			}
 			/** If we previously had a connection (and we're not exiting), broadcast connection lost.*/
-			if (hadConnection && !m_Client.AppIsExiting())
+			if (hadConnection && !m_Client->AppIsExiting())
 			{
 				if (bReconnect)
 					UE_LOG(LogAkAudio, Warning, TEXT("Lost connection to WAAPI client. Attempting reconnection ..."));
 				hadConnection = false;
 				AsyncTask(ENamedThreads::GameThread, [this]()
 				{
-					m_Client.BroadcastConnectionLost();
+					auto m_Client = FAkWaapiClient::Get();
+					if (m_Client)
+					{
+						m_Client->BroadcastConnectionLost();
+					}
 				});
 			}
 			/** If we should reconnect, attempt a reconnection and, if successful, call the client's connection established function on the game thread.
@@ -137,11 +211,15 @@ uint32 FAkWaapiClientConnectionHandler::Run()
 				if (AttemptReconnect())
 				{
 					hadConnection = true;
-					m_Client.SetConnectionClosing(false);
+					m_Client->SetConnectionClosing(false);
 					ResetReconnectionDelay();
 					AsyncTask(ENamedThreads::GameThread, [this]()
 					{
-						m_Client.ConnectionEstablished();
+						auto m_Client = FAkWaapiClient::Get();
+						if (m_Client)
+						{
+							m_Client->ConnectionEstablished();
+						}
 					});
 				}
 				else
@@ -172,7 +250,7 @@ uint32 FAkWaapiClientConnectionHandler::Run()
 			TSharedRef<FJsonObject> args = MakeShareable(new FJsonObject());
 			TSharedRef<FJsonObject> options = MakeShareable(new FJsonObject());
 			TSharedPtr<FJsonObject> result = MakeShareable(new FJsonObject());
-			m_Client.Call(ak::wwise::core::getInfo, args, options, result, true);
+			m_Client->Call(ak::wwise::core::getInfo, args, options, result, true);
 			WaitEvent->Wait(ConnectionMonitorDelay.GetValue() * 1000);
 			WaitEvent->Reset();
 		}
@@ -189,10 +267,11 @@ void FAkWaapiClientConnectionHandler::ResetReconnectionDelay()
 		FScopeLock Lock(&AkSettingsSection);
 		if (auto AkSettingsPerUser = GetDefault<UAkSettingsPerUser>())
 		{
-			bReconnect = AkSettingsPerUser->bAutoConnectToWAAPI;
+			bReconnect = AkSettingsPerUser->AutoConnectToWAAPI;
 		}
 	}
-	if (bReconnect && !m_Client.AppIsExiting() && !m_Client.IsDisconnecting())
+	auto m_Client = FAkWaapiClient::Get();
+	if (bReconnect && m_Client && !m_Client->AppIsExiting() && !m_Client->IsDisconnecting())
 	{
 		ReconnectDelay.Set(2);
 		LogOutputCount.Set(0);
@@ -212,7 +291,8 @@ void FAkWaapiClientConnectionHandler::Exit()
 bool FAkWaapiClientConnectionHandler::AttemptReconnect()
 {
 #if AK_SUPPORT_WAAPI
-	if (m_Client.AttemptConnection())
+	auto m_Client = FAkWaapiClient::Get();
+	if (m_Client->AttemptConnection())
 	{
 		UE_LOG(LogAkAudio, Log, TEXT("Successfully connected to Wwise Authoring on localhost."));
 		return true;
@@ -226,7 +306,7 @@ Helpers
 ------------------------------------------------------------------------------------*/
 struct FAkWaapiClientImpl
 {
-	void Init(FAkWaapiClient& in_Client)
+	void Init()
 	{
 #if AK_SUPPORT_WAAPI
 		if (FApp::IsUnattended())
@@ -240,20 +320,31 @@ struct FAkWaapiClientImpl
 			UE_LOG(LogAkAudio, Display, TEXT("WAAPI client is disabled. WAAPI is unavailable."));
 			return;
 		}
-		m_Client = WAAPI->NewClient();
-		if (UNLIKELY(!m_Client))
+		
+		if (auto AkSettingsPerUser = GetDefault<UAkSettingsPerUser>())
 		{
-			UE_LOG(LogAkAudio, Display, TEXT("WAAPI client is disabled. Client cannot be enabled."));
+			 if (AkSettingsPerUser->AutoConnectToWAAPI)
+			 {
+				m_Client = WAAPI->NewClient();
+			 }
+		}
+
+		if (!m_pConnectionHandler)
+		{
+			m_pConnectionHandler = MakeShareable(new FAkWaapiClientConnectionHandler());
+			m_pConnectionHandler->RegisterAutoConnectChangedCallback();
+			FString ThreadName(FString::Printf(TEXT("WAAPIClientConnectionThread%i"), ThreadCounter.Increment()));
+			m_pReconnectionThread = MakeShareable(FRunnableThread::Create(m_pConnectionHandler.Get(),
+				*ThreadName, 0,
+				EThreadPriority::TPri_BelowNormal));
+		}
+		
+		if (!m_Client)
+		{
+			UE_LOG(LogAkAudio, Log, TEXT("WAAPI client is disabled."));
 			return;
 		}
 
-		m_pConnectionHandler = MakeShareable(new FAkWaapiClientConnectionHandler(in_Client));
-		FString ThreadName(FString::Printf(TEXT("WAAPIClientConnectionThread%i"), ThreadCounter.Increment()));
-		m_pReconnectionThread = MakeShareable(FRunnableThread::Create(m_pConnectionHandler.Get(),
-			*ThreadName, 0,
-			EThreadPriority::TPri_BelowNormal));
-
-		m_pConnectionHandler->RegisterAutoConnectChangedCallback();
 #else
 		UE_LOG(LogAkAudio, Verbose, TEXT("WAAPI client is disabled. Configuration doesn't support WAAPI."));
 #endif
@@ -363,7 +454,7 @@ void FAkWaapiClient::Initialize()
 		g_AkWaapiClient = new FAkWaapiClient();
 		if(g_AkWaapiClient)
 		{
-			g_AkWaapiClient->m_Impl->Init(*g_AkWaapiClient);
+			g_AkWaapiClient->m_Impl->Init();
 		}
 		FCoreDelegates::OnPreExit.AddLambda([]
 		{
@@ -380,6 +471,10 @@ void FAkWaapiClient::Initialize()
 			}
 			DeleteInstance();
 		});
+	}
+	else
+	{
+		g_AkWaapiClient->m_Impl->Init();
 	}
 #endif
 }
@@ -456,6 +551,47 @@ bool FAkWaapiClient::IsProjectLoaded()
 #else
 	return false;
 #endif
+}
+
+bool FAkWaapiClient::IsProjectAvailable()
+{
+#if AK_SUPPORT_WAAPI
+	TSharedRef<FJsonObject> args = MakeShareable(new FJsonObject());
+	TSharedRef<FJsonObject> opts = MakeShareable(new FJsonObject());
+	TSharedPtr<FJsonObject> result = MakeShareable(new FJsonObject());
+	g_AkWaapiClient->Call(ak::wwise::core::ping, args, opts, result);
+
+	bool projectAvailable = false;
+	if (result->TryGetBoolField(WwiseWaapiHelper::IS_AVAILABLE, projectAvailable))
+	{
+		if (!projectAvailable)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+	return true;
+#else
+	return false;
+#endif
+}
+
+void FAkWaapiClient::SetSoundBankGenerationInProgress(bool bInProgress)
+{
+	g_bSoundBankGenerationInProgress = bInProgress;
+}
+
+bool FAkWaapiClient::IsSoundBankGenerationInProgress()
+{
+	return g_bSoundBankGenerationInProgress;
+}
+
+void FAkWaapiClient::SetCurrentThreadAllowedDuringGeneration(bool bAllowed)
+{
+	t_bAllowWaapiOnThisThreadDuringGeneration = bAllowed;
 }
 
 void FAkWaapiClient::ConvertProjectPath(FString& Path)
@@ -593,6 +729,10 @@ bool FAkWaapiClient::CheckProjectLoaded()
 		return false;
 	}
 
+	if (!IsProjectAvailable())
+	{
+		return false;
+	}
 	if (const UAkSettings* AkSettings = GetDefault<UAkSettings>())
 	{
 		auto ProjectPathString = WwiseUnrealHelper::GetWwiseProjectPath();
@@ -653,7 +793,7 @@ bool FAkWaapiClient::AttemptConnection()
 		if (!bProjectLoaded)
 		{
 			// We successfully connected, but the wrong project is open (or getting the project timed out). Disconnect.
-			// We will attemps reconnection later.
+			// We will attempt reconnection later.
 			bIsWrongProjectLoaded = true;
 			m_Impl->m_Client->Disconnect();
 			bConnected = false;
@@ -665,11 +805,20 @@ bool FAkWaapiClient::AttemptConnection()
 }
 
 bool FAkWaapiClient::Subscribe(const char* in_uri, const FString& in_options, WampEventCallback in_callback,
-	uint64& out_subscriptionId, FString& out_result, int in_iTimeoutMs /*= 500*/)
+	uint64& out_subscriptionId, FString& out_result)
 {
 	bool eResult = false;
 #if AK_SUPPORT_WAAPI
+	int timeout = 500;
+	if (auto Settings = GetDefault<UAkSettingsPerUser>())
+	{
+		timeout = Settings->WaapiCallsTimeout;
+	}
 	std::string out_resultString("");
+	if (g_bSoundBankGenerationInProgress && !t_bAllowWaapiOnThisThreadDuringGeneration)
+	{
+		return false;
+	}
 	if (IsConnected())
 	{
 		if (!m_Impl->bIsConnectionClosing)
@@ -677,8 +826,12 @@ bool FAkWaapiClient::Subscribe(const char* in_uri, const FString& in_options, Wa
 			// Call for the AK WAAPI method using string params.
 			if (LIKELY(g_AkWaapiClient->m_Impl->m_Client))
 			{
-				FScopeLock Lock(&m_Impl->ClientSection);
-				eResult = m_Impl->m_Client->Subscribe(in_uri, TCHAR_TO_UTF8(*in_options), &WampEventCallbacks, out_subscriptionId, out_resultString, in_iTimeoutMs);
+				FScopedClientLockWithTimeout Lock(m_Impl->ClientSection, timeout);
+				if (!Lock.IsLocked())
+				{
+					return false;
+				}
+				eResult = m_Impl->m_Client->Subscribe(in_uri, TCHAR_TO_UTF8(*in_options), &WampEventCallbacks, out_subscriptionId, out_resultString, timeout);
 			}
 			if (eResult)
 			{
@@ -703,7 +856,7 @@ bool FAkWaapiClient::Subscribe(const char* in_uri, const FString& in_options, Wa
 }
 
 bool FAkWaapiClient::Subscribe(const char* in_uri, const TSharedRef<FJsonObject>& in_options, WampEventCallback in_callback,
-	uint64& out_subscriptionId, TSharedPtr<FJsonObject>& out_result, int in_iTimeoutMs /*= 500*/)
+	uint64& out_subscriptionId, TSharedPtr<FJsonObject>& out_result)
 {
 	bool eResult = false;
 #if AK_SUPPORT_WAAPI
@@ -714,7 +867,7 @@ bool FAkWaapiClient::Subscribe(const char* in_uri, const TSharedRef<FJsonObject>
 
 	FString out_resultString(TEXT(""));
 	// Call for the AK WAAPI method using string params.
-	eResult = Subscribe(in_uri, in_optionsString, in_callback, out_subscriptionId, out_resultString, in_iTimeoutMs);
+	eResult = Subscribe(in_uri, in_optionsString, in_callback, out_subscriptionId, out_resultString);
 
 	if (!eResult)
 	{
@@ -730,11 +883,17 @@ bool FAkWaapiClient::Subscribe(const char* in_uri, const TSharedRef<FJsonObject>
 	return eResult;
 }
 
-bool FAkWaapiClient::Unsubscribe(const uint64_t& in_subscriptionId, FString& out_result, int in_iTimeoutMs /*= 500*/, bool in_bSilenceLog /*= false*/)
+bool FAkWaapiClient::Unsubscribe(const uint64_t& in_subscriptionId, FString& out_result, bool in_bSilenceLog /*= false*/)
 {
 	bool eResult = false;
 #if AK_SUPPORT_WAAPI
-	if (IsConnected())
+	int timeout = 500;
+	if (auto Settings = GetDefault<UAkSettingsPerUser>())
+	{
+		timeout = Settings->WaapiCallsTimeout;
+	}
+	const bool bSkipDueToGeneration = g_bSoundBankGenerationInProgress && !t_bAllowWaapiOnThisThreadDuringGeneration;
+	if (!bSkipDueToGeneration && IsConnected())
 	{
 		if (!m_Impl->bIsConnectionClosing)
 		{
@@ -742,58 +901,56 @@ bool FAkWaapiClient::Unsubscribe(const uint64_t& in_subscriptionId, FString& out
 			// Call the AK WAAPI method.
 			if (LIKELY(g_AkWaapiClient->m_Impl->m_Client))
 			{
-				FScopeLock Lock(&m_Impl->ClientSection);
-				eResult = m_Impl->m_Client->Unsubscribe(in_subscriptionId, out_resultString, in_iTimeoutMs);
+				FScopedClientLockWithTimeout Lock(m_Impl->ClientSection, timeout);
+				if (Lock.IsLocked())
+				{
+					eResult = m_Impl->m_Client->Unsubscribe(in_subscriptionId, out_resultString, timeout);
+				}
 			}
-			if (eResult)
+			if (!eResult && !in_bSilenceLog)
 			{
-				if (m_Impl->m_wampEventCallbackMap.Contains(in_subscriptionId))
-					m_Impl->m_wampEventCallbackMap.Remove(in_subscriptionId);
-			}
-			else if (!in_bSilenceLog)
-			{
-				UE_LOG(LogAkAudio, Log, TEXT("Unsubscription failed: %s"), *FString(UTF8_TO_TCHAR(out_resultString.c_str())));
+				// Expected error when Wwise has closed and the WAMP session has ended
+				if (out_resultString.find("no_such_subscription") == std::string::npos)
+				{
+					UE_LOG(LogAkAudio, Verbose, TEXT("FAkWaapiClient::Unsubscribe: Unsubscription failed: %s"), *FString(UTF8_TO_TCHAR(out_resultString.c_str())));
+				}
 			}
 			out_result = FString(UTF8_TO_TCHAR(out_resultString.c_str()));
 		}
 	}
-	else
+	else if (!bSkipDueToGeneration)
 	{
 		if (m_Impl && m_Impl->m_pConnectionHandler)
 		{
 			m_Impl->m_pConnectionHandler->ResetReconnectionDelay();
 		}
+	}
+	// Always remove from callback map. We no longer want to track this subscription,
+	// and it may be stale if Wwise has closed
+	if (m_Impl->m_wampEventCallbackMap.Contains(in_subscriptionId))
+	{
+		m_Impl->m_wampEventCallbackMap.Remove(in_subscriptionId);
 	}
 #endif
 	return eResult;
 }
 
-bool FAkWaapiClient::Unsubscribe(const uint64_t& in_subscriptionId, TSharedPtr<FJsonObject>& out_result, int in_iTimeoutMs /*= 500*/, bool in_bSilenceLog /*= false*/)
+bool FAkWaapiClient::Unsubscribe(const uint64_t& in_subscriptionId, TSharedPtr<FJsonObject>& out_result, bool in_bSilenceLog /*= false*/)
 {
 	bool eResult = false;
 #if AK_SUPPORT_WAAPI
-	if (IsConnected())
-	{
-		FString out_resultString(TEXT(""));
-		// Call the AK WAAPI method.
-		eResult = Unsubscribe(in_subscriptionId, out_resultString, in_iTimeoutMs, in_bSilenceLog);
+	FString out_resultString(TEXT(""));
+	// Call the FString overload which handles cleanup regardless of connection state
+	eResult = Unsubscribe(in_subscriptionId, out_resultString, in_bSilenceLog);
 
-		if (!eResult)
-		{
-			// Deserialize a JSON object from the string
-			TSharedRef< TJsonReader<> > Reader = TJsonReaderFactory<>::Create(out_resultString);
-
-			if ((!FJsonSerializer::Deserialize(Reader, out_result) || !out_result.IsValid()) && IsConnected())
-			{
-				UE_LOG(LogAkAudio, Log, TEXT("Unsubscribe: Output result -> unable to deserialize the Json object from the string : %s"), *out_resultString);
-			}
-		}
-	}
-	else
+	if (!eResult && IsConnected())
 	{
-		if (m_Impl && m_Impl->m_pConnectionHandler)
+		// Deserialize a JSON object from the string
+		TSharedRef< TJsonReader<> > Reader = TJsonReaderFactory<>::Create(out_resultString);
+
+		if (!in_bSilenceLog && (!FJsonSerializer::Deserialize(Reader, out_result) || !out_result.IsValid()))
 		{
-			m_Impl->m_pConnectionHandler->ResetReconnectionDelay();
+			UE_LOG(LogAkAudio, Log, TEXT("Unsubscribe: Output result -> unable to deserialize the Json object from the string : %s"), *out_resultString);
 		}
 	}
 #endif
@@ -817,6 +974,10 @@ bool FAkWaapiClient::Call(const char* in_uri, const FString& in_args, const FStr
 {
 	bool eResult = false;
 #if AK_SUPPORT_WAAPI
+	if (g_bSoundBankGenerationInProgress && !t_bAllowWaapiOnThisThreadDuringGeneration)
+	{
+		return false;
+	}
 	if (IsConnected())
 	{
 		if (!m_Impl->bIsConnectionClosing)
@@ -825,7 +986,11 @@ bool FAkWaapiClient::Call(const char* in_uri, const FString& in_args, const FStr
 			// Call the AK WAAPI method.
 			if (LIKELY(g_AkWaapiClient->m_Impl->m_Client))
 			{
-				FScopeLock Lock(&m_Impl->ClientSection);
+				FScopedClientLockWithTimeout Lock(m_Impl->ClientSection, in_iTimeoutMs);
+				if (!Lock.IsLocked())
+				{
+					return false;
+				}
 				eResult = m_Impl->m_Client->Call(in_uri, TCHAR_TO_UTF8(*in_args), TCHAR_TO_UTF8(*in_options), out_resultString, in_iTimeoutMs);
 			}
 			if (!eResult && !silenceLog)
@@ -852,7 +1017,7 @@ bool FAkWaapiClient::Call(const char* in_uri, const FString& in_args, const FStr
 	{
 		return Call(in_uri, in_args, in_options, out_result, UserSettings->WaapiCallsTimeout, silenceLog);
 	}
-	return false;
+	return Call(in_uri, in_args, in_options, out_result, 500, silenceLog);
 }
 
 bool FAkWaapiClient::Call(const char* in_uri, const TSharedRef<FJsonObject>& in_args, const TSharedRef<FJsonObject>& in_options,
@@ -894,7 +1059,7 @@ bool FAkWaapiClient::Call(const char* in_uri, const TSharedRef<FJsonObject>& in_
 	{
 		return Call(in_uri, in_args, in_options, out_result, UserSettings->WaapiCallsTimeout, silenceLog);
 	}
-	return false;
+	return Call(in_uri, in_args, in_options, out_result, 500, silenceLog);
 }
 
 bool FAkWaapiClient::Call(const char* inUri, const TArray<KeyValueArgs>& Values,

@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Wwise/WwiseProjectDatabase.h"
@@ -48,6 +48,8 @@ WwiseDataStructureScopeLock::WwiseDataStructureScopeLock(const FWwiseProjectData
 const WwiseAcousticTextureGlobalIdsMap& WwiseDataStructureScopeLock::GetAcousticTextures() const
 {
 	static const auto Empty = WwiseAcousticTextureGlobalIdsMap();
+	
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
 
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
@@ -57,6 +59,7 @@ const WwiseAcousticTextureGlobalIdsMap& WwiseDataStructureScopeLock::GetAcoustic
 
 WwiseRefAcousticTexture WwiseDataStructureScopeLock::GetAcousticTexture(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -69,6 +72,8 @@ const WwiseAudioDeviceGlobalIdsMap& WwiseDataStructureScopeLock::GetAudioDevices
 {
 	static const auto Empty = WwiseAudioDeviceGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -77,6 +82,7 @@ const WwiseAudioDeviceGlobalIdsMap& WwiseDataStructureScopeLock::GetAudioDevices
 
 WwiseRefAudioDevice WwiseDataStructureScopeLock::GetAudioDevice(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -89,6 +95,8 @@ const WwiseAuxBusGlobalIdsMap& WwiseDataStructureScopeLock::GetAuxBusses() const
 {
 	static const auto Empty = WwiseAuxBusGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -97,6 +105,7 @@ const WwiseAuxBusGlobalIdsMap& WwiseDataStructureScopeLock::GetAuxBusses() const
 
 WwiseRefAuxBus WwiseDataStructureScopeLock::GetAuxBus(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -108,7 +117,9 @@ WwiseRefAuxBus WwiseDataStructureScopeLock::GetAuxBus(const FWwiseObjectInfo& In
 const WwiseBusGlobalIdsMap& WwiseDataStructureScopeLock::GetBusses() const
 {
 	static const auto Empty = WwiseBusGlobalIdsMap();
-
+	
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+	
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -117,6 +128,7 @@ const WwiseBusGlobalIdsMap& WwiseDataStructureScopeLock::GetBusses() const
 
 WwiseRefBus WwiseDataStructureScopeLock::GetBus(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -129,6 +141,8 @@ const WwiseCustomPluginGlobalIdsMap& WwiseDataStructureScopeLock::GetCustomPlugi
 {
 	static const auto Empty = WwiseCustomPluginGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -137,6 +151,7 @@ const WwiseCustomPluginGlobalIdsMap& WwiseDataStructureScopeLock::GetCustomPlugi
 
 WwiseRefCustomPlugin WwiseDataStructureScopeLock::GetCustomPlugin(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -149,6 +164,8 @@ const WwiseDialogueArgumentGlobalIdsMap& WwiseDataStructureScopeLock::GetDialogu
 {
 	static const auto Empty = WwiseDialogueArgumentGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -157,6 +174,7 @@ const WwiseDialogueArgumentGlobalIdsMap& WwiseDataStructureScopeLock::GetDialogu
 
 WwiseRefDialogueArgument WwiseDataStructureScopeLock::GetDialogueArgument(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -169,6 +187,8 @@ const WwiseDialogueEventGlobalIdsMap& WwiseDataStructureScopeLock::GetDialogueEv
 {
 	static const auto Empty = WwiseDialogueEventGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -177,6 +197,7 @@ const WwiseDialogueEventGlobalIdsMap& WwiseDataStructureScopeLock::GetDialogueEv
 
 WwiseRefDialogueEvent WwiseDataStructureScopeLock::GetDialogueEvent(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -189,6 +210,8 @@ const WwiseEventGlobalIdsMap& WwiseDataStructureScopeLock::GetEvents() const
 {
 	static const auto Empty = WwiseEventGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -197,6 +220,7 @@ const WwiseEventGlobalIdsMap& WwiseDataStructureScopeLock::GetEvents() const
 
 WwiseDBSet<WwiseRefEvent> WwiseDataStructureScopeLock::GetEvent(const FWwiseEventInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -205,9 +229,25 @@ WwiseDBSet<WwiseRefEvent> WwiseDataStructureScopeLock::GetEvent(const FWwiseEven
 	return Result;
 }
 
+WwiseDBSet<WwiseRefEvent> WwiseDataStructureScopeLock::GetAllLanguageEvents(const FWwiseEventInfo& InInfo) const
+{
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
+	const auto* PlatformData = GetCurrentPlatformData();
+	if (UNLIKELY(!PlatformData)) return {};
+
+	WwiseDBSet<WwiseRefEvent> Result;
+	for (auto& Language : GetLanguages())
+	{
+		PlatformData->GetRef(Result, Language, ConvertWwiseObjectInfo(InInfo));	
+	}
+	return Result;
+}
+
 const WwiseExternalSourceGlobalIdsMap& WwiseDataStructureScopeLock::GetExternalSources() const
 {
 	static const auto Empty = WwiseExternalSourceGlobalIdsMap();
+
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
 
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
@@ -217,6 +257,7 @@ const WwiseExternalSourceGlobalIdsMap& WwiseDataStructureScopeLock::GetExternalS
 
 WwiseRefExternalSource WwiseDataStructureScopeLock::GetExternalSource(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -229,6 +270,8 @@ const WwiseGameParameterGlobalIdsMap& WwiseDataStructureScopeLock::GetGameParame
 {
 	static const auto Empty = WwiseGameParameterGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -237,6 +280,7 @@ const WwiseGameParameterGlobalIdsMap& WwiseDataStructureScopeLock::GetGameParame
 
 WwiseRefGameParameter WwiseDataStructureScopeLock::GetGameParameter(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -249,25 +293,43 @@ const WwiseMediaGlobalIdsMap& WwiseDataStructureScopeLock::GetMediaFiles() const
 {
 	static const auto Empty = WwiseMediaGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
 	return PlatformData->MediaFiles;
 }
 
-WwiseRefMedia WwiseDataStructureScopeLock::GetMediaFile(const FWwiseObjectInfo& InInfo) const
+WwiseRefMedia WwiseDataStructureScopeLock::GetMediaFile(const FWwiseObjectInfo& InInfo, uint32 LanguageId) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
 	WwiseRefMedia Result;
-	PlatformData->GetRef(Result, GetCurrentLanguage(), ConvertWwiseObjectInfo(InInfo));
+	const WwiseDBSharedLanguageId* LanguagePtr = &GetCurrentLanguage();
+	if (LanguageId != 0)
+	{
+		const auto& Languages{ GetLanguages() };
+		for (const auto& Language : Languages)
+		{
+			if (Language.GetLanguageId() == LanguageId)
+			{
+				LanguagePtr = &Language;
+				break;
+			}
+		}
+	}
+	PlatformData->GetRef(Result, *LanguagePtr, ConvertWwiseObjectInfo(InInfo));
 	return Result;
 }
 
 const WwisePluginLibGlobalIdsMap& WwiseDataStructureScopeLock::GetPluginLibs() const
 {
 	static const auto Empty = WwisePluginLibGlobalIdsMap();
+
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
 
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
@@ -277,6 +339,7 @@ const WwisePluginLibGlobalIdsMap& WwiseDataStructureScopeLock::GetPluginLibs() c
 
 WwiseRefPluginLib WwiseDataStructureScopeLock::GetPluginLib(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -289,6 +352,8 @@ const WwisePluginShareSetGlobalIdsMap& WwiseDataStructureScopeLock::GetPluginSha
 {
 	static const auto Empty = WwisePluginShareSetGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -297,6 +362,7 @@ const WwisePluginShareSetGlobalIdsMap& WwiseDataStructureScopeLock::GetPluginSha
 
 WwiseRefPluginShareSet WwiseDataStructureScopeLock::GetPluginShareSet(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -309,6 +375,8 @@ const WwiseSoundBankGlobalIdsMap& WwiseDataStructureScopeLock::GetSoundBanks() c
 {
 	static const auto Empty = WwiseSoundBankGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -317,6 +385,7 @@ const WwiseSoundBankGlobalIdsMap& WwiseDataStructureScopeLock::GetSoundBanks() c
 
 WwiseRefSoundBank WwiseDataStructureScopeLock::GetSoundBank(const FWwiseObjectInfo& InInfo, uint32 LanguageId) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -343,6 +412,8 @@ const WwiseStateGlobalIdsMap& WwiseDataStructureScopeLock::GetStates() const
 {
 	static const auto Empty = WwiseStateGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -351,6 +422,7 @@ const WwiseStateGlobalIdsMap& WwiseDataStructureScopeLock::GetStates() const
 
 WwiseRefState WwiseDataStructureScopeLock::GetState(const FWwiseGroupValueInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -363,6 +435,8 @@ const WwiseStateGroupGlobalIdsMap& WwiseDataStructureScopeLock::GetStateGroups()
 {
 	static const auto Empty = WwiseStateGroupGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -371,6 +445,7 @@ const WwiseStateGroupGlobalIdsMap& WwiseDataStructureScopeLock::GetStateGroups()
 
 WwiseRefStateGroup WwiseDataStructureScopeLock::GetStateGroup(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -383,6 +458,8 @@ const WwiseSwitchGlobalIdsMap& WwiseDataStructureScopeLock::GetSwitches() const
 {
 	static const auto Empty = WwiseSwitchGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -391,6 +468,7 @@ const WwiseSwitchGlobalIdsMap& WwiseDataStructureScopeLock::GetSwitches() const
 
 WwiseRefSwitch WwiseDataStructureScopeLock::GetSwitch(const FWwiseGroupValueInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -403,6 +481,8 @@ const WwiseSwitchGroupGlobalIdsMap& WwiseDataStructureScopeLock::GetSwitchGroups
 {
 	static const auto Empty = WwiseSwitchGroupGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -411,6 +491,7 @@ const WwiseSwitchGroupGlobalIdsMap& WwiseDataStructureScopeLock::GetSwitchGroups
 
 WwiseRefSwitchGroup WwiseDataStructureScopeLock::GetSwitchGroup(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -423,6 +504,8 @@ const WwiseTriggerGlobalIdsMap& WwiseDataStructureScopeLock::GetTriggers() const
 {
 	static const auto Empty = WwiseTriggerGlobalIdsMap();
 
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return Empty;
+
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return Empty;
 
@@ -431,6 +514,7 @@ const WwiseTriggerGlobalIdsMap& WwiseDataStructureScopeLock::GetTriggers() const
 
 WwiseRefTrigger WwiseDataStructureScopeLock::GetTrigger(const FWwiseObjectInfo& InInfo) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
 	if (UNLIKELY(!PlatformData)) return {};
 
@@ -441,6 +525,7 @@ WwiseRefTrigger WwiseDataStructureScopeLock::GetTrigger(const FWwiseObjectInfo& 
 
 const WwisePlatformDataStructure* WwiseDataStructureScopeLock::GetCurrentPlatformData() const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	if (DisableDefaultPlatforms())
 	{
 		WWISE_DB_LOG(VeryVerbose, "Trying to access current platform data when none is loaded by design (cooking)");
@@ -483,59 +568,65 @@ const WwisePlatformDataStructure* WwiseDataStructureScopeLock::GetCurrentPlatfor
 	return PlatformData;
 }
 
-bool WwiseDataStructureScopeLock::IsSingleUser(const WwiseAnyRef& Asset) const
+int WwiseDataStructureScopeLock::GetUsageCount(const WwiseAnyRef& Asset) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	if (Asset.GetType() == WwiseRefType::Media)
 	{
-		return IsSingleUserMedia(Asset.GetId());
+		return GetMediaUsageCount(Asset.GetId());
 	}
 	else if (Asset.GetType() == WwiseRefType::SoundBank)
 	{
 		const auto Language = Asset.GetLanguage();
-		return IsSingleUserSoundBank(Asset.GetId(), Language ? Language->Id : 0);
+		return GetSoundBankUsageCount(Asset.GetId(), Language ? Language->Id : 0);
 	}
 	else
 	{
-		return false;
+		return 0;
 	}
 }
 
-bool WwiseDataStructureScopeLock::IsSingleUserMedia(uint32 InId) const
+int WwiseDataStructureScopeLock::GetMediaUsageCount(uint32 InId) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
-	if (UNLIKELY(!PlatformData)) return false;		// Cannot say. Err to safety.
+	if (UNLIKELY(!PlatformData)) return 0;
 
-	if (const auto* UsageCount = PlatformData->MediaUsageCount.Find(WwiseDatabaseMediaIdKey(InId, 0)))
+	if (const auto* UsageCount = PlatformData->MediaUsageCount.Find(InId))
 	{
-		return *UsageCount <= 1;
+		return *UsageCount;
 	}
-	return true;
+	return 0;
 }
 
-bool WwiseDataStructureScopeLock::IsSingleUserSoundBank(uint32 InId, uint32 InLanguageId) const
+int WwiseDataStructureScopeLock::GetSoundBankUsageCount(uint32 InId, uint32 InLanguageId) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	const auto* PlatformData = GetCurrentPlatformData();
-	if (UNLIKELY(!PlatformData)) return false;		// Cannot say. Err to safety.
+	if (UNLIKELY(!PlatformData)) return 0;		// Cannot say. Err to safety.
 
 	if (const auto* UsageCount = PlatformData->SoundBankUsageCount.Find(WwiseDatabaseLocalizableIdKey(InId, InLanguageId)))
 	{
-		return *UsageCount <= 1;
+		return *UsageCount;
 	}
-	return true;
+	return 0;
 }
 
-bool WwiseDataStructureScopeLock::IsSingleUserSoundBank(uint32 InId, const WwiseDBString& InLanguage) const
+int WwiseDataStructureScopeLock::GetSoundBankUsageCount(uint32 InId, const WwiseDBString& InLanguage) const
 {
-	return IsSingleUserSoundBank(InId, GetLanguageId(InLanguage));
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
+	return GetSoundBankUsageCount(InId, GetLanguageId(InLanguage));
 }
 
 uint32 WwiseDataStructureScopeLock::GetLanguageId(const WwiseDBString& Name) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	return DataStructure.RootData.GetLanguageId(Name);
 }
 
 WwiseDBString WwiseDataStructureScopeLock::GetLanguageName(uint32 InId) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	return DataStructure.RootData.GetLanguageName(InId);
 }
 
@@ -551,6 +642,7 @@ const WwiseDBSet<WwiseDBSharedPlatformId>& WwiseDataStructureScopeLock::GetPlatf
 
 WwiseRefPlatform WwiseDataStructureScopeLock::GetPlatform(const FWwiseSharedPlatformId& InPlatformId) const
 {
+	if (IWwiseProjectDatabaseModule::bIsShuttingDown) return {};
 	FGuid Guid = InPlatformId.GetPlatformGuid();
 	if (const auto* Platform = DataStructure.RootData.PlatformGuids.Find(WwiseDBGuid(Guid.A, Guid.B, Guid.C, Guid.D)))
 	{

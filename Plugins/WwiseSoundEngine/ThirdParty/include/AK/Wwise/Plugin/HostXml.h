@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /**
@@ -591,7 +591,7 @@ namespace AK::Wwise::Plugin
 			 * 
 			 * For example, this \c Item node has three content elements: <tt>&lt;Item&gt;1&amp;number;3&lt;/Item&gt;</tt> 
 			 * 
-			 * For normal string retrieval, the \ref ReadElementString will actually return the value of an XML with
+			 * For normal string retrieval, the \ref AK::Wwise::Plugin::V1::XmlReader::ReadElementString will actually return the value of an XML with
 			 * proper parsing applied.
 			 * 
 			 * \aknote
@@ -657,7 +657,7 @@ namespace AK::Wwise::Plugin
 			 * 		This method is mostly a convenience and could be easily coded by a simple loop.
 			 * 
 			 * 		Once the current node hierarchy information is determined by proper use of
-			 * 		\ref Read, MoveToContent will make sure to provide the actual content of the entity. If no
+			 * 		\ref AK::Wwise::Plugin::V1::XmlReader::Read, MoveToContent will make sure to provide the actual content of the entity. If no
 			 * 		content is available, it will return \ref AK::Wwise::Plugin::XmlNodeType::EndElement "EndElement"
 			 * 		or \ref AK::Wwise::Plugin::XmlNodeType::EndEntity "EndEntity".
 			 * \endaknote
@@ -682,7 +682,7 @@ namespace AK::Wwise::Plugin
 			 * elements and append them, returning one simple string. This function also works with empty nodes and
 			 * multiple lines.
 			 * 
-			 * If no processing or incrementing is warranted, \ref Read, \ref MoveToContent and \ref GetValue
+			 * If no processing or incrementing is warranted, \ref AK::Wwise::Plugin::V1::XmlReader::Read, \ref AK::Wwise::Plugin::V1::XmlReader::MoveToContent and \ref AK::Wwise::Plugin::V1::XmlReader::GetValue
 			 * should be used instead.
 			 * 
 			 * This method goes past the ending element node, or the equivalent of calling Read once more.
@@ -701,7 +701,7 @@ namespace AK::Wwise::Plugin
 			 * \brief Reads all the contents of an Element or Attribute as a string, including markup. Increments the pointer.
 			 * 
 			 * This returns the raw contents of the file except the enclosing elements. It can be considered the
-			 * equivalent of \ref ReadElementString , but will also return raw XML tags.
+			 * equivalent of \ref AK::Wwise::Plugin::V1::XmlReader::ReadElementString , but will also return raw XML tags.
 			 * 
 			 * An empty string will be returned if no content is available.
 			 * 
@@ -719,7 +719,7 @@ namespace AK::Wwise::Plugin
 			 * \brief Reads the Element or Attribute as a string, including markup. Increments the pointer.
 			 * 
 			 * This returns the raw contents of the file including the enclosing elements. It can be considered the
-			 * equivalent of \ref ReadElementString , but will also return raw XML tags.
+			 * equivalent of \ref AK::Wwise::Plugin::V1::XmlReader::ReadElementString , but will also return raw XML tags.
 			 * 
 			 * An empty string will be returned if no content is available.
 			 * 
@@ -735,8 +735,6 @@ namespace AK::Wwise::Plugin
 
 			/**
 			 * \brief Sets the reading pointer past the current node, skipping any inner content.
-			 * 
-			 * \return false if the end of file is reached.
 			 */
 			inline void Skip() { g_cinterface->Skip(this); }
 
@@ -839,7 +837,7 @@ namespace AK::Wwise::Plugin
 			/**
 			 * \brief Creates a new inner node.
 			 * 
-			 * You should close this element with \ref WriteEndElement.
+			 * You should close this element with \ref AK::Wwise::Plugin::V1::XmlWriter::WriteEndElement.
 			 * 
 			 * \param[in] in_rcsElementName Node name, as retrieved on the reader with \ref AK::Wwise::Plugin::XmlReader::GetName "GetName".
 			 * \param[in] in_eType Ignored.

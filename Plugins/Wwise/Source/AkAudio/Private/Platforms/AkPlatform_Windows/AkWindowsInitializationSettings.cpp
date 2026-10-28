@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "Platforms/AkPlatform_Windows/AkWindowsInitializationSettings.h"
@@ -56,7 +56,9 @@ UAkWindowsInitializationSettings::UAkWindowsInitializationSettings(const FObject
 
 void UAkWindowsInitializationSettings::FillInitializationStructure(FAkInitializationStructure& InitializationStructure) const
 {
-#if PLATFORM_64BITS
+#if UE_5_8_OR_LATER
+	#define AK_WINDOWS_ARCHITECTURE "x64_"
+#elif PLATFORM_64BITS
 	#define AK_WINDOWS_ARCHITECTURE "x64_"
 #else
 	#define AK_WINDOWS_ARCHITECTURE "Win32_"

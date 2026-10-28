@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -31,6 +31,7 @@ using WwisePluginLibNamesMap = WwiseDBMap<WwiseDBString, WwiseRefPluginLib>;
 using WwisePluginLibIdsMap = WwiseDBMap<WwiseDBShortId, WwiseRefPluginLib>;
 using WwiseSoundBankIdsMap = WwiseDBMap<WwiseDBShortId, WwiseRefSoundBank>;
 using WwiseDialogueEventIdsMap = WwiseDBMap<WwiseDBShortId, WwiseRefDialogueEvent>;
+using WwiseDialogueArgumentArray = WwiseDBArray<WwiseRefDialogueArgument>;
 using WwiseDialogueArgumentIdsMap = WwiseDBMap<WwiseDBShortId, WwiseRefDialogueArgument>;
 using WwiseBusIdsMap = WwiseDBMap<WwiseDBShortId, WwiseRefBus>;
 using WwiseAuxBusIdsMap = WwiseDBMap<WwiseDBShortId, WwiseRefAuxBus>;
@@ -48,7 +49,7 @@ using WwiseStateIdsMap = WwiseDBMap<GroupValueKey, WwiseRefState>;
 using WwiseSwitchIdsMap = WwiseDBMap<GroupValueKey, WwiseRefSwitch>;
 using WwiseSwitchContainerArray = WwiseDBArray<WwiseRefSwitchContainer>;
 
-using WwiseMediaGlobalIdsMap = WwiseDBMap<MediaIdKey, WwiseRefMedia>;
+using WwiseMediaGlobalIdsMap = WwiseDBMap<LocalizableMediaIdKey, WwiseRefMedia>;
 using WwiseSoundBankGlobalIdsMap = WwiseDBMap<LocalizableIdKey, WwiseRefSoundBank>;
 using WwiseDialogueEventGlobalIdsMap = WwiseDBMap<LocalizableIdKey, WwiseRefDialogueEvent>;
 using WwiseDialogueArgumentGlobalIdsMap = WwiseDBMap<LocalizableIdKey, WwiseRefDialogueArgument>;

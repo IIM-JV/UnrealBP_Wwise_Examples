@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /**
@@ -172,7 +172,7 @@ namespace AK::Wwise::Plugin
 		{
 		public:
 			/**
-			 * \copydoc CSinkDevices::Instance
+			 * \copydoc ak_wwise_plugin_sink_devices_v1
 			 */
 			using Instance = CSinkDevices::Instance;
 
@@ -202,7 +202,7 @@ namespace AK::Wwise::Plugin
 			 */
 			struct Interface : public CSinkDevices
 			{
-				using Instance = SinkDevices;																			///< \copydoc SinkDevices
+				using Instance = SinkDevices;																			///< \c SinkDevices
 				Interface()
 				{
 					CSinkDevices::GetCount = [](const struct ak_wwise_plugin_sink_devices_instance_v1* in_this) { return static_cast<const Instance*>(in_this)->GetCount(); };
@@ -291,7 +291,7 @@ namespace AK::Wwise::Plugin
 			 * \param[in] in_num Device number, from zero to the value, as retrieved by GetCount.
 			 * \return const char* UTF-8 Name of the interface in_num.
 			 * 
-			 * \sa \ref GetCount for a discussion on providing data in a multithread-aware environment.
+			 * \sa \ref AK::Wwise::Plugin::V1::SinkDevices::GetCount for a discussion on providing data in a multithread-aware environment.
 			 */
 			virtual const char* GetName(int in_num) const = 0;
 
@@ -305,7 +305,7 @@ namespace AK::Wwise::Plugin
 			 * \param[in] in_num Device number, from zero to the value, as retrieved by GetCount.
 			 * \return uint32_t Device ID for the interface in_num.
 			 * 
-			 * \sa \ref GetCount for a discussion on providing data in a multithread-aware environment.
+			 * \sa \ref AK::Wwise::Plugin::V1::SinkDevices::GetCount for a discussion on providing data in a multithread-aware environment.
 			 */
 			virtual uint32_t GetDeviceID(int in_num) const = 0;
 		};

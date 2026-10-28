@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #include "AkSoundBankGenerationManager.h"
@@ -52,6 +52,7 @@ AkSoundBankGenerationManager::~AkSoundBankGenerationManager()
 void AkSoundBankGenerationManager::SetIsBuilding(bool bIsBuilding)
 {
 	bIsBuildingData = bIsBuilding;
+	FAkWaapiClient::SetSoundBankGenerationInProgress(bIsBuilding);
 }
 
 void AkSoundBankGenerationManager::Init()
@@ -168,7 +169,10 @@ void AkSoundBankGenerationManager::Notify(const FString& key, const FString& mes
 					sharedThis->NotificationItem->ExpireAndFadeout();
 				}
 
-				GEditor->PlayEditorSound(AudioCuePath);
+				if (GEngine->UseSound() && GEditor->CanPlayEditorSound())
+				{
+					GEditor->PlayEditorSound(AudioCuePath);					
+				}
 			});
 	}
 }
@@ -247,6 +251,11 @@ bool AkSoundBankGenerationManager::WwiseConsoleGenerate()
 			}
 		}
 	}
+	if (InitParameters.bVerbose)
+	{
+		WwiseConsoleArguments += TEXT(" --verbose");
+	}
+	
 
 	return RunWwiseConsole(WwiseConsoleCommand, WwiseConsoleArguments);
 }
@@ -319,6 +328,12 @@ bool AkSoundBankGenerationManager::RunWwiseConsole(const FString& WwiseConsoleCo
 #if AK_SUPPORT_WAAPI
 bool AkSoundBankGenerationManager::WAAPIGenerate()
 {
+	FAkWaapiClient::SetCurrentThreadAllowedDuringGeneration(true);
+	ON_SCOPE_EXIT
+	{
+		FAkWaapiClient::SetCurrentThreadAllowedDuringGeneration(false);
+	};
+
 	if (!SubscribeToGenerationDone())
 	{
 		return false;

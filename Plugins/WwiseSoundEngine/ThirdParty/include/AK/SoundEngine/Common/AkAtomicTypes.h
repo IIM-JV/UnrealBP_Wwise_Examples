@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 // AkAtomicTypes.h
@@ -30,6 +30,8 @@ the specific language governing permissions and limitations under the License.
 
 #include <stdint.h>
 
+#include <AK/AkPlatforms.h>
+
 typedef volatile int32_t AkAtomic32;
-typedef volatile int64_t AkAtomic64;
+typedef volatile int64_t AK_ALIGN(AkAtomic64, 8);
 typedef volatile void* AkAtomicPtr;

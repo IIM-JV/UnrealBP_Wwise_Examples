@@ -5,15 +5,15 @@ released in source code form as part of the SDK installer package.
 Commercial License Usage
 
 Licensees holding valid commercial licenses to the AUDIOKINETIC Wwise Technology
-may use this file in accordance with the end user license agreement provided 
+may use this file in accordance with the end user license agreement provided
 with the software or, alternatively, in accordance with the terms contained in a
 written agreement between you and Audiokinetic Inc.
 
 Apache License Usage
 
-Alternatively, this file may be used under the Apache License, Version 2.0 (the 
-"Apache License"); you may not use this file except in compliance with the 
-Apache License. You may obtain a copy of the Apache License at 
+Alternatively, this file may be used under the Apache License, Version 2.0 (the
+"Apache License"); you may not use this file except in compliance with the
+Apache License. You may obtain a copy of the Apache License at
 http://www.apache.org/licenses/LICENSE-2.0.
 
 Unless required by applicable law or agreed to in writing, software distributed
@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /**
@@ -36,14 +36,14 @@ the specific language governing permissions and limitations under the License.
 
 /**
  * \brief Backend API to load and save custom data in XML format.
- * 
+ *
  * The initialization of custom-data-aware plug-ins is done using one of three mutually
  * exclusive possibilities:
  * - \b InitToDefault : Initializes a new instance using the default values
  * - \b InitFromInstance : Initializes a new instance using the values provided by the
  *		   original instance.
  * - \b InitFromWorkunit : Initializes a new instance using the values provided in the Save method.
- * 
+ *
  * \aknote In order to use the XML reader and writer instance, your plug-in must request the XML
  *         interface: ak_wwise_plugin_host_xml_v1. \endaknote
  */
@@ -67,9 +67,9 @@ struct ak_wwise_plugin_custom_data_v1
 
 	/**
 	 * \brief Initializes the plug-in's custom data to its default values.
-	 * 
+	 *
 	 * This method is mutually exclusive with the other Init methods.
-	 * 
+	 *
 	 * \param[in] in_this Current instance of this interface.
 	 */
 	void(*InitToDefault)(
@@ -77,12 +77,12 @@ struct ak_wwise_plugin_custom_data_v1
 
 	/**
 	 * \brief Copy the plug-in's custom data from another instance of the same plug-in.
-	 * 
+	 *
 	 * This is used during copy/paste and delete for Undo purposes. The properties on
 	 * the PropertySet do not need to be copied in this method.
-	 * 
+	 *
 	 * This method is mutually exclusive with the other Init methods.
-	 * 
+	 *
 	 * \param[in] in_this Current instance of this interface (Destination).
 	 * \param[in] in_source The object that will provide the data used in initializing
 	 *			  this instance.
@@ -94,12 +94,12 @@ struct ak_wwise_plugin_custom_data_v1
 
 	/**
 	 * \brief Load the custom data structure from the provided Work Unit's XML.
-	 * 
+	 *
 	 * This method is mutually exclusive with the other Init methods.
-	 * 
+	 *
 	 * \aknote In order to use the in_pReader instance, your plug-in must request the XML
 	 *         interface: ak_wwise_plugin_host_xml_v1. \endaknote
-	 * 
+	 *
 	 * \param[in] in_this Current instance of this interface.
 	 * \param[in] in_pReader XML Reader instance.
 	 * \return true if load succeeded.
@@ -110,10 +110,10 @@ struct ak_wwise_plugin_custom_data_v1
 
 	/**
 	 * \brief Save custom data structure in the provided Work Unit's XML.
-	 * 
+	 *
 	 * \aknote In order to use the in_pWriter instance, your plug-in must request the XML
 	 *         interface: ak_wwise_plugin_host_xml_v1. \endaknote
-	 * 
+	 *
 	 * \param[in] in_this Current instance of this interface.
 	 * \param[in] in_pWriter XML Writer instance.
 	 * \return true if save succeeded.
@@ -124,33 +124,33 @@ struct ak_wwise_plugin_custom_data_v1
 
 	/**
 	 * \brief OnDelete function is called when the user presses the "delete" button on a plug-in.
-	 * 
+	 *
 	 * This handler function should properly clean custom data and set undo/redo action properly
 	 * to allow recreation on undo.
-	 * 
+	 *
 	 * \param[in] in_this Current instance of this interface.
 	 */
 	void(*OnDelete)(struct ak_wwise_plugin_custom_data_instance_v1* in_this);
 
 	/**
 	 * \brief Obtains parameters that will be sent to the sound engine when Wwise is connected.
-	 * 
+	 *
 	 * This block should contain only data that is NOT a property defined in the plug-in xml file. The
 	 * parameter ID should be different than the ones used in the plug-in xml.
-	 * 
+	 *
 	 * This is used when there are Object Store, large binary data sections, or properties not usually
 	 * residing in the XML. \sa \ref AK::Wwise::Plugin::AudioPlugin::GetBankParameters for a discussion
 	 * on parameter passing to the Sound Engine.
-	 * 
+	 *
 	 * \aknote In order to use the in_pDataWriter instance, your plug-in must request the data writer
 	 *         interface: ak_wwise_plugin_host_data_writer_v1. \endaknote
-	 * 
+	 *
 	 * \param[in] in_this Current instance of this interface.
 	 * \param[in] in_guidPlatform The unique ID of the queried platform
 	 * \param[in] in_idParam The plug-in defined parameter ID
 	 * \param[in] in_pDataWriter A pointer to the data writer instance being used.
 	 * \return true if the plug-in has some plug-in defined data.
-	 * 
+	 *
 	 * \sa
 	 * - \ref AK::Wwise::Plugin::Host::NotifyInternalDataChanged
 	 * - \ref AK::IAkPluginParam::ALL_PLUGIN_DATA_ID
@@ -180,23 +180,23 @@ namespace AK::Wwise::Plugin
 
 		/**
 		 * \brief Backend API to load and save custom data in XML format.
-		 * 
+		 *
 		 * The initialization of custom-data-aware plug-ins is done using one of three mutually
 		 * exclusive possibilities:
 		 * - \b InitToDefault : Initializes a new instance using the default values
 		 * - \b InitFromInstance : Initializes a new instance using the values provided by the
 		 *		   original instance.
 		 * - \b InitFromWorkunit : Initializes a new instance using the values provided in the Save method.
-		 * 
+		 *
 		 * \aknote AK::Wwise::Plugin::The RequestXml class is automatically derived when providing
-		 * \ref CustomData in C++. \endaknote
+		 * \ref AK::Wwise::Plugin::V1::CustomData in C++. \endaknote
 		 */
 		class CustomData : public CCustomData::Instance,
 			public AK::Wwise::Plugin::RequestXml
 		{
 		public:
 			/**
-			 * \copydoc CCustomData::Instance
+			 * \copydoc ak_wwise_plugin_custom_data_v1
 			 */
 			using Instance = CCustomData::Instance;
 
@@ -294,19 +294,19 @@ namespace AK::Wwise::Plugin
 
 			/**
 			 * \brief Initializes the plug-in's custom data to its default values.
-			 * 
+			 *
 			 * This method is mutually exclusive with the other Init methods.
 			 */
 			virtual void InitToDefault() { }
 
 			/**
 			 * \brief Copy the plug-in's custom data from another instance of the same plug-in.
-			 * 
+			 *
 			 * This is used during copy/paste and delete for Undo purposes. The properties on
 			 * the PropertySet do not need to be copied in this method.
-			 * 
+			 *
 			 * This method is mutually exclusive with the other Init methods.
-			 * 
+			 *
 			 * \param[in] in_source The object that will provide the data used in initializing
 			 *			  this instance.
 			 * \return true if successful.
@@ -315,12 +315,12 @@ namespace AK::Wwise::Plugin
 
 			/**
 			 * \brief Load the custom data structure from the provided Work Unit's XML.
-			 * 
+			 *
 			 * This method is mutually exclusive with the other Init methods.
-			 * 
+			 *
 			 * \aknote In order to use the in_pReader instance, your plug-in must request the XML
 			 *         interface: ak_wwise_plugin_host_xml_v1. \endaknote
-			 * 
+			 *
 			 * \param[in] in_reader XML Reader instance.
 			 * \return true if load succeeded.
 			 */
@@ -328,10 +328,10 @@ namespace AK::Wwise::Plugin
 
 			/**
 			 * \brief Save custom data structure in the provided XML.
-			 * 
+			 *
 			 * \aknote In order to use the in_pWriter instance, your plug-in must request the XML
 			 *         interface: AK::Wwise::Plugin::RequestXml. \endaknote
-			 * 
+			 *
 			 * \param[in] in_writer XML Writer instance.
 			 * \return true if save succeeded.
 			 */
@@ -339,7 +339,7 @@ namespace AK::Wwise::Plugin
 
 			/**
 			 * \brief OnDelete function is called when the user presses the "delete" button on a plug-in.
-			 * 
+			 *
 			 * This handler function should properly clean custom data and set undo/redo action properly
 			 * to allow recreation on undo.
 			 */
@@ -347,22 +347,22 @@ namespace AK::Wwise::Plugin
 
 			/**
 			 * \brief Obtains parameters that will be sent to the sound engine when Wwise is connected.
-			 * 
+			 *
 			 * This block should contain only data that is NOT a property defined in the plug-in xml file. The
 			 * parameter ID should be different than the ones used in the plug-in xml.
-			 * 
+			 *
 			 * This is used when there are Object Store, large binary data sections, or properties not usually
-			 * residing in the XML. \sa \ref AudioPlugin::GetBankParameters "GetBankParameters"
+			 * residing in the XML. \sa \ref AK::Wwise:Plugin::V1::AudioPlugin::GetBankParameters "GetBankParameters"
 			 * for a discussion on parameter passing to the Sound Engine.
-			 * 
+			 *
 			 * \aknote In order to use the in_pDataWriter instance, your plug-in must request the data writer
 			 *         interface: AK::Wwise::Plugin::RequestWrite. \endaknote
-			 * 
+			 *
 			 * \param[in] in_guidPlatform The unique ID of the queried platform
 			 * \param[in] in_idParam The plug-in defined parameter ID
 			 * \param[in] in_dataWriter A pointer to the data writer instance being used.
 			 * \return true if the plug-in has some plug-in defined data.
-			 * 
+			 *
 			 * \sa
 			 * - \ref AK::Wwise::Plugin::Host::NotifyInternalDataChanged
 			 * - \ref AK::IAkPluginParam::ALL_PLUGIN_DATA_ID

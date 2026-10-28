@@ -12,11 +12,12 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 
+#include "Wwise/WwiseUnrealVersion.h"
 #if WITH_EDITORONLY_DATA
 #include "Wwise/Packaging/WwiseAssetLibraryInfo.h"
 #endif
@@ -39,7 +40,9 @@ public:
 	UWwiseFilterableAssetLibrary() {}
 
 	virtual bool IsPostLoadThreadSafe() const override { return true; }
+#if !UE_5_8_OR_LATER
 	virtual bool IsDestructionThreadSafe() const override { return true; }
+#endif
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(Blueprintable, EditAnywhere, Category = "Default")

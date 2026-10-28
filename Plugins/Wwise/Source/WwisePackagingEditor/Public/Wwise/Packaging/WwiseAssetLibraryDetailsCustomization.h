@@ -12,7 +12,7 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
@@ -25,6 +25,8 @@ Copyright (c) 2025 Audiokinetic Inc.
 #include "Wwise/Packaging/WwiseFilterableAssetLibrary.h"
 
 #include "WwiseAssetLibraryDetailsCustomization.generated.h"
+
+class UWwiseAssetLibraryGroup;
 
 class UWwisePackagingSettings;
 /**
@@ -178,11 +180,14 @@ protected:
 	// Number of operations waiting to be executed
 	std::atomic<uint32> WorkersWaiting{ 0 };
 
+	// Cancellation token for aborting long-running filter operations
+	std::atomic<uint32> RebuildCancellationToken{ 0 };
+
 	// Is a rebuild already requested (we don't want to do it twice).
-	bool bRebuildAlreadyRequested{ false };
+	std::atomic<bool> bRebuildAlreadyRequested{ false };
 
 	// Is an search and sort already requested (we don't want to do it twice).
-	bool bSearchAndSortAlreadyRequested{ false };
+	std::atomic<bool> bSearchAndSortAlreadyRequested{ false };
 
 	// Tree view for the filtered assets
 	TSharedPtr<STreeView<FFilteredAssetRef>> FilteredAssetsTreeView;
@@ -205,6 +210,9 @@ protected:
 	// Whether the Asset Library is represented in the Packaging Settings or not. Calculated in UpdateAssetLibraryInSettings.
 	bool bAssetLibraryInSettings{ false };
 
+	// The Library Group that contains the Asset Library.
+	UWwiseAssetLibraryGroup* LibraryGroup = nullptr;
+
 	// Show what will be packaged in this asset.
 	bool bHonorPackagingSettings{ true };
 
@@ -217,7 +225,7 @@ protected:
 	virtual void OnSortModeChanged(EColumnSortPriority::Type Priority, const FName& Column, EColumnSortMode::Type Mode);
 	
 	virtual void RebuildFilteredAssets();
-	virtual bool CalculateFilteredAssets(UWwiseFilterableAssetLibrary* AssetLibrary, TUniquePtr<FWwiseAssetLibraryFilteringSharedData>& FilteringSharedData);
+	virtual bool CalculateFilteredAssets(UWwiseFilterableAssetLibrary* AssetLibrary, TUniquePtr<FWwiseAssetLibraryFilteringSharedData>& FilteringSharedData, const TArray<FAssetData>& AssetData, uint32 CurrentToken);
 	virtual bool CopyFilteredAssets(TUniquePtr<FWwiseAssetLibraryFilteringSharedData>& FilteringSharedData);
 	virtual void ApplySearchAndSort();
 	virtual void RefreshTree();
@@ -230,7 +238,10 @@ protected:
 	virtual FReply HonorPackagingSettingsLinkClicked() const;
 	virtual bool IsPackagingSettingsHonored() const;
 	virtual void FilterPackagingSettings(FWwiseAssetLibraryProcessor* Processor,
-		const TUniquePtr<FWwiseAssetLibraryFilteringSharedData>& FilteringSharedData, UWwiseFilterableAssetLibrary* StopBefore) const;
+		const TUniquePtr<FWwiseAssetLibraryFilteringSharedData>& FilteringSharedData, UWwiseFilterableAssetLibrary* StopBefore, uint32 CurrentToken) const;
+	virtual void SetGameplayModulesTargeted(TArray<FString>& PackagePaths, TArray<FString>& ExcludedGameplayModules) const;
+	virtual EVisibility IsLibraryUnusedVisible() const;
+	virtual bool IsLibraryUnusedEnabled() const;
 
 	virtual void ClaimWorkingThread();
 	virtual void ReleaseWorkingThread();

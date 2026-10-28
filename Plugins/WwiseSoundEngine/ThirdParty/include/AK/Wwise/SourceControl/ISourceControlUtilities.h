@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /// \file
@@ -127,7 +127,6 @@ namespace AK
 			/// Get the root path for a move operation.
 			/// The input file can either be a work unit or a source file
 			/// \warning This function is not thread-safe.
-			/// \return Nothing as return value.  The out_pszRootPath will contain the path.
 			virtual void GetMoveRootPath(
 				LPCWSTR in_pszFullPath,			///< The full path of an audio source or work unit file
 				LPWSTR out_pszRootPath,			///< A pointer to the array that receives the root path

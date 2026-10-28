@@ -12,25 +12,30 @@ Licensees holding valid licenses to the AUDIOKINETIC Wwise Technology may use
 this file in accordance with the end user license agreement provided with the
 software or, alternatively, in accordance with the terms contained
 in a written agreement between you and Audiokinetic Inc.
-Copyright (c) 2025 Audiokinetic Inc.
+Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 #pragma once
 
 #include "Wwise/WwiseGeneratedFiles.h"
 
+#include <atomic>
+
 #include "Async/Future.h"
 #include "CoreTypes.h"
 #include "Containers/UnrealString.h"
 #include "GenericPlatform/GenericPlatformFile.h"
 #include "Wwise/AdapterTypes/IWwiseDirectoryVisitor.h"
+#include "Wwise/WwiseProjectDatabaseCancellationToken.h"
 
 class WWISEPROJECTDATABASE_API WwiseDirectoryVisitor
 {
 	friend IWwiseDirectoryVisitor<WwiseDirectoryVisitor>;
 public:
-	WwiseDirectoryVisitor(const WwiseDBString* InPlatformName = nullptr) :
-		PlatformName(InPlatformName)
+	WwiseDirectoryVisitor(const WwiseDBString* InPlatformName = nullptr,
+		FWwiseProjectDatabaseCancellationToken InToken = {}) :
+		PlatformName(InPlatformName),
+		Token(InToken)
 	{}
 
 	WwiseGeneratedFiles& Get();
@@ -46,6 +51,7 @@ private:
 	WwiseDBArray<WwiseDBFuture<FPlatformRootDirectoryVisitor*>> Futures;
 
 	const WwiseDBString* PlatformName;
+	FWwiseProjectDatabaseCancellationToken Token;
 
 	class FSoundBankVisitor;
 	class FMediaVisitor;

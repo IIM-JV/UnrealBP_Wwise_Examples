@@ -21,7 +21,7 @@ under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
 OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
 the specific language governing permissions and limitations under the License.
 
-  Copyright (c) 2025 Audiokinetic Inc.
+  Copyright (c) 2026 Audiokinetic Inc.
 *******************************************************************************/
 
 /**
@@ -262,8 +262,8 @@ namespace AK::Wwise::Plugin
 		 * \brief Base API to create a custom undo event in a plug-in.
 		 * 
 		 * This is useful when you handle custom properties, not handled by Property Sets.
-		 * 
-		 * UndoEvent should be handled by the \ref UndoEvent template.
+		 *
+		 * UndoEvent should be handled by the \ref AK::Wwise::Plugin::V1::UndoEvent template.
 		 */
 		class BaseUndoEvent : public CUndoEvent::Instance
 		{
@@ -313,10 +313,10 @@ namespace AK::Wwise::Plugin
 		 * \brief Base API to create a custom undo event in a plug-in.
 		 * 
 		 * This is useful when you handle custom properties, not handled by Property Sets.
-		 * 
-		 * Undo events should be derived by your undo class, providing \ref UndoEvent::Undo,
-		 * \ref UndoEvent::Redo and \ref UndoEvent::GetName methods.
-		 * 
+		 *
+		 * Undo events should be derived by your undo class, providing \ref AK::Wwise::Plugin::V1::UndoEvent::Undo,
+		 * \ref AK::Wwise::Plugin::V1::UndoEvent::Redo and \ref AK::Wwise::Plugin::V1::UndoEvent::GetName methods.
+		 *
 		 * No pointer to the backend class should be kept inside the undo event, as the object can be deleted
 		 * and recreated when the plug-in gets removed through undo. The backend will be recreated at that point,
 		 * making the pointer invalid.
