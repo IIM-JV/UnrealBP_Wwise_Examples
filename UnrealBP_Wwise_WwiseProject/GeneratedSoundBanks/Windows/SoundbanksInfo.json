@@ -3,7 +3,7 @@
   "Platform": "Windows",
   "BasePlatform": "Windows",
   "SchemaVersion": "16",
-  "SoundBankVersion": "154",
+  "SoundBankVersion": "172",
   "RootPaths": {
    "ProjectRoot": "../..",
    "SourceFilesRoot": "../../.cache",
@@ -18,7 +18,7 @@
     "Type": "User",
     "GUID": "{701ECBBD-9C7B-4030-8CDB-749EE5D1C7B9}",
     "Language": "SFX",
-    "Hash": "{C7B2CDD7-D218-82CA-2D3E-9B129EC6FD69}",
+    "Hash": "{F559C4CC-EF10-6ECF-321B-9C84F57134A0}",
     "ObjectPath": "Init",
     "ShortName": "Init",
     "Path": "Init.bnk",
@@ -27,7 +27,7 @@
       {
        "Id": "2317455096",
        "Name": "No_Output",
-       "ObjectPath": "\\Audio Devices\\Default Work Unit\\No_Output",
+       "ObjectPath": "\\Devices\\Default Work Unit\\No_Output",
        "GUID": "{CFFFDBF9-13D5-4355-911B-7F65113F9F7A}",
        "LibName": "No Output",
        "LibId": "11862023"
@@ -35,7 +35,7 @@
       {
        "Id": "3859886410",
        "Name": "System",
-       "ObjectPath": "\\Audio Devices\\Default Work Unit\\System",
+       "ObjectPath": "\\Devices\\Default Work Unit\\System",
        "GUID": "{FC10F005-5DAA-44A0-AC32-843C19B92623}",
        "LibName": "System",
        "LibId": "11403271"
@@ -46,7 +46,7 @@
      {
       "Id": "3803692087",
       "Name": "Master Audio Bus",
-      "ObjectPath": "\\Master-Mixer Hierarchy\\Default Work Unit\\Master Audio Bus",
+      "ObjectPath": "\\Busses\\Default Work Unit\\Master Audio Bus",
       "GUID": "{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}"
      }
     ],
@@ -132,7 +132,7 @@
     "Type": "User",
     "GUID": "{EDDD8D4D-ED31-41A8-A92D-A7B16690A59D}",
     "Language": "SFX",
-    "Hash": "{9066B780-26A2-2332-D0B5-76CF02B8B654}",
+    "Hash": "{713B29F6-BA73-EF13-8AFC-FAE4BA8E2666}",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\MainBank",
     "ShortName": "MainBank",
     "Path": "MainBank.bnk",
@@ -495,6 +495,6 @@
     ]
    }
   ],
-  "FileHash": "{151F6F4A-4A87-DA80-3B45-A70FF1E45DD6}"
+  "FileHash": "{B653845C-717D-77BC-06D9-7E46BD8DD9F8}"
  }
 }

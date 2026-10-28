@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<WwiseDocument Type="WorkUnit" ID="{241380A9-B94D-4BAB-83E4-E95E8495B956}" SchemaVersion="123">
-	<InteractiveMusic>
+<WwiseDocument Type="WorkUnit" ID="{241380A9-B94D-4BAB-83E4-E95E8495B956}" SchemaVersion="133">
+	<Containers>
 		<WorkUnit Name="Default Work Unit" ID="{241380A9-B94D-4BAB-83E4-E95E8495B956}" PersistMode="Standalone">
 			<ChildrenList>
 				<MusicSwitchContainer Name="Music" ID="{0B3F8A61-CB66-4C46-8290-26AE7C2776A2}" ShortID="464655572">
@@ -120,50 +120,34 @@
 											</ChildrenList>
 											<ObjectLists>
 												<ObjectList Name="Sequences">
-													<Reference>
-														<Local>
-															<MusicTrackSequence Name="" ID="{893FDDCD-DF60-4222-A6C4-F9BC5E769647}">
+													
+												<MusicTrackSequence Name="" ID="{893FDDCD-DF60-4222-A6C4-F9BC5E769647}">
 																<ObjectLists>
 																	<ObjectList Name="Clips">
-																		<Reference>
-																			<Local>
-																				<MusicClip Name="music_happy" ID="{7BD8C384-D5EB-463D-A762-7900572C097C}">
+																		
+																	<MusicClip Name="music_happy" ID="{7BD8C384-D5EB-463D-A762-7900572C097C}">
 																					<PropertyList>
 																						<Property Name="EndTrimOffset" Type="Real64" Value="46310"/>
 																						<Property Name="FadeInMode" Type="int16" Value="0"/>
 																						<Property Name="FadeOutMode" Type="int16" Value="0"/>
 																					</PropertyList>
 																					<AudioSourceRef Name="music_happy" ID="{5BAC1B01-2D65-48FF-9D03-23E2B3617003}"/>
-																				</MusicClip>
-																			</Local>
-																		</Reference>
-																	</ObjectList>
+																				</MusicClip></ObjectList>
 																</ObjectLists>
-															</MusicTrackSequence>
-														</Local>
-													</Reference>
-												</ObjectList>
+															</MusicTrackSequence></ObjectList>
 											</ObjectLists>
 										</MusicTrack>
 									</ChildrenList>
 									<ObjectLists>
 										<ObjectList Name="Cues">
-											<Reference>
-												<Local>
-													<MusicCue Name="Entry Cue" ID="{53B42FFA-C542-4D2E-89BB-72EEE98CEBCE}"/>
-												</Local>
-											</Reference>
-											<Reference>
-												<Local>
-													<MusicCue Name="Exit Cue" ID="{4949A1B6-E0BA-4891-AD2F-64416710CB0C}">
+											
+											
+										<MusicCue Name="Entry Cue" ID="{53B42FFA-C542-4D2E-89BB-72EEE98CEBCE}"/><MusicCue Name="Exit Cue" ID="{4949A1B6-E0BA-4891-AD2F-64416710CB0C}">
 														<PropertyList>
 															<Property Name="CueType" Type="int16" Value="1"/>
 															<Property Name="TimeMs" Type="Real64" Value="46310"/>
 														</PropertyList>
-													</MusicCue>
-												</Local>
-											</Reference>
-										</ObjectList>
+													</MusicCue></ObjectList>
 									</ObjectLists>
 								</MusicSegment>
 							</ChildrenList>
@@ -256,50 +240,34 @@
 											</ChildrenList>
 											<ObjectLists>
 												<ObjectList Name="Sequences">
-													<Reference>
-														<Local>
-															<MusicTrackSequence Name="" ID="{F97DD0D3-9775-4D62-B4A0-C5F7C04DE4CF}">
+													
+												<MusicTrackSequence Name="" ID="{F97DD0D3-9775-4D62-B4A0-C5F7C04DE4CF}">
 																<ObjectLists>
 																	<ObjectList Name="Clips">
-																		<Reference>
-																			<Local>
-																				<MusicClip Name="music_sad" ID="{8633E74B-E1F2-4557-9D73-07CDC921DC34}">
+																		
+																	<MusicClip Name="music_sad" ID="{8633E74B-E1F2-4557-9D73-07CDC921DC34}">
 																					<PropertyList>
 																						<Property Name="EndTrimOffset" Type="Real64" Value="32000"/>
 																						<Property Name="FadeInMode" Type="int16" Value="0"/>
 																						<Property Name="FadeOutMode" Type="int16" Value="0"/>
 																					</PropertyList>
 																					<AudioSourceRef Name="music_sad" ID="{9B9A00FF-C7E6-4FDE-8C4E-C632A5531254}"/>
-																				</MusicClip>
-																			</Local>
-																		</Reference>
-																	</ObjectList>
+																				</MusicClip></ObjectList>
 																</ObjectLists>
-															</MusicTrackSequence>
-														</Local>
-													</Reference>
-												</ObjectList>
+															</MusicTrackSequence></ObjectList>
 											</ObjectLists>
 										</MusicTrack>
 									</ChildrenList>
 									<ObjectLists>
 										<ObjectList Name="Cues">
-											<Reference>
-												<Local>
-													<MusicCue Name="Entry Cue" ID="{17B1FC74-471C-4F96-9156-064902BF289A}"/>
-												</Local>
-											</Reference>
-											<Reference>
-												<Local>
-													<MusicCue Name="Exit Cue" ID="{E3C3EA59-D207-4660-9CA5-626FE96C836B}">
+											
+											
+										<MusicCue Name="Entry Cue" ID="{17B1FC74-471C-4F96-9156-064902BF289A}"/><MusicCue Name="Exit Cue" ID="{E3C3EA59-D207-4660-9CA5-626FE96C836B}">
 														<PropertyList>
 															<Property Name="CueType" Type="int16" Value="1"/>
 															<Property Name="TimeMs" Type="Real64" Value="32000"/>
 														</PropertyList>
-													</MusicCue>
-												</Local>
-											</Reference>
-										</ObjectList>
+													</MusicCue></ObjectList>
 									</ObjectLists>
 								</MusicSegment>
 							</ChildrenList>
@@ -307,14 +275,14 @@
 					</ChildrenList>
 					<ObjectLists>
 						<ObjectList Name="Arguments">
-							<Reference>
+							
+						<PluginInnerObject Name="" ID="{D4A0DF37-7C73-469F-BB14-B76D89F260A0}" PluginName="MusicArgumentsSlot" CompanyID="0" PluginID="89"><ReferenceList><Reference Name="Argument">
 								<ObjectRef Name="MusicMood" ID="{468813D7-D29F-4586-852B-3BB1C02F959E}" WorkUnitID="{2E7B1E38-2A23-46AC-95F1-63D08A6ED408}"/>
-							</Reference>
-						</ObjectList>
+							</Reference></ReferenceList></PluginInnerObject></ObjectList>
 						<ObjectList Name="Entries">
-							<Reference>
-								<Local>
-									<MultiSwitchEntry Name="" ID="{F4D72E04-BBC5-4225-9B8D-781ED22B40D7}">
+							
+							
+						<MultiSwitchEntry Name="" ID="{F4D72E04-BBC5-4225-9B8D-781ED22B40D7}">
 										<ReferenceList>
 											<Reference Name="AudioNode">
 												<ObjectRef Name="Happy" ID="{F4EE31AE-1A9A-4D0C-85CB-6C24DBEA1B3E}" WorkUnitID="{241380A9-B94D-4BAB-83E4-E95E8495B956}"/>
@@ -322,17 +290,12 @@
 										</ReferenceList>
 										<ObjectLists>
 											<ObjectList Name="EntryPath">
-												<Reference>
+												
+											<PluginInnerObject Name="" ID="{1AAE5B39-A6C7-4CAA-9597-82A6FD65795C}" PluginName="EntryPathSlot" CompanyID="0" PluginID="88"><ReferenceList><Reference Name="EntryPathObject">
 													<ObjectRef Name="Happy" ID="{E2814AA3-A738-4636-8391-10B16020D5BC}" WorkUnitID="{2E7B1E38-2A23-46AC-95F1-63D08A6ED408}"/>
-												</Reference>
-											</ObjectList>
+												</Reference></ReferenceList></PluginInnerObject></ObjectList>
 										</ObjectLists>
-									</MultiSwitchEntry>
-								</Local>
-							</Reference>
-							<Reference>
-								<Local>
-									<MultiSwitchEntry Name="" ID="{64FC74E8-BB18-4B47-8E24-4A0A5DAA8108}">
+									</MultiSwitchEntry><MultiSwitchEntry Name="" ID="{64FC74E8-BB18-4B47-8E24-4A0A5DAA8108}">
 										<ReferenceList>
 											<Reference Name="AudioNode">
 												<ObjectRef Name="Sad" ID="{26A5C05B-0889-4F09-BF87-47929A5F9EFC}" WorkUnitID="{241380A9-B94D-4BAB-83E4-E95E8495B956}"/>
@@ -340,18 +303,15 @@
 										</ReferenceList>
 										<ObjectLists>
 											<ObjectList Name="EntryPath">
-												<Reference>
+												
+											<PluginInnerObject Name="" ID="{66F7E27A-E28F-49AE-98EF-F6BE8C08C1E9}" PluginName="EntryPathSlot" CompanyID="0" PluginID="88"><ReferenceList><Reference Name="EntryPathObject">
 													<ObjectRef Name="Sad" ID="{8305F016-F2C1-4E1E-9729-3A6D15D5D834}" WorkUnitID="{2E7B1E38-2A23-46AC-95F1-63D08A6ED408}"/>
-												</Reference>
-											</ObjectList>
+												</Reference></ReferenceList></PluginInnerObject></ObjectList>
 										</ObjectLists>
-									</MultiSwitchEntry>
-								</Local>
-							</Reference>
-						</ObjectList>
+									</MultiSwitchEntry></ObjectList>
 					</ObjectLists>
 				</MusicSwitchContainer>
 			</ChildrenList>
 		</WorkUnit>
-	</InteractiveMusic>
+	</Containers>
 </WwiseDocument>

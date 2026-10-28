@@ -3,7 +3,7 @@
   "Project": {
    "Name": "UnrealBP_Wwise_WwiseProject",
    "GUID": "{B2E36573-4CD8-4C98-BC22-38AFC5771241}",
-   "Generator": "2024.1.3.8749"
+   "Generator": "2025.1.12.9287"
   },
   "CacheRoot": "../.cache",
   "Platforms": [
@@ -31,6 +31,6 @@
     "UseAsStandIn": "true"
    }
   ],
-  "FileHash": "{BE8071E9-1073-B106-9354-169232D14AE2}"
+  "FileHash": "{D83D3BBB-15CC-A006-A5DD-0FED8D251E51}"
  }
 }

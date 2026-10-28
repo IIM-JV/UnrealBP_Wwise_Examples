@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<WwiseDocument Type="WorkUnit" ID="{64B9E6DA-C536-4B25-98CD-383C63C2D7B5}" SchemaVersion="123">
-	<AudioObjects>
+<WwiseDocument Type="WorkUnit" ID="{64B9E6DA-C536-4B25-98CD-383C63C2D7B5}" SchemaVersion="133">
+	<Containers>
 		<WorkUnit Name="Default Work Unit" ID="{64B9E6DA-C536-4B25-98CD-383C63C2D7B5}" PersistMode="Standalone">
 			<ChildrenList>
 				<Sound Name="Beep" ID="{DCA35908-3EDB-4308-8090-1975BFAD2EAE}" ShortID="758734449">
@@ -383,9 +383,8 @@
 					</ChildrenList>
 					<ObjectLists>
 						<ObjectList Name="RTPC">
-							<Reference>
-								<Local>
-									<RTPC Name="" ID="{4A3D57D4-E3D5-4595-900C-259D06D3C85D}" ShortID="329350633">
+							
+						<RTPC Name="" ID="{4A3D57D4-E3D5-4595-900C-259D06D3C85D}" ShortID="329350633">
 										<PropertyList>
 											<Property Name="PropertyName" Type="string" Value="Volume"/>
 										</PropertyList>
@@ -415,10 +414,7 @@
 												</Custom>
 											</Reference>
 										</ReferenceList>
-									</RTPC>
-								</Local>
-							</Reference>
-						</ObjectList>
+									</RTPC></ObjectList>
 					</ObjectLists>
 					<ActiveSourceList>
 						<ActiveSource Name="heartbeat" ID="{5F294D12-C960-4734-A23F-2D2E0E1C5519}" Platform="Linked"/>
@@ -426,5 +422,5 @@
 				</Sound>
 			</ChildrenList>
 		</WorkUnit>
-	</AudioObjects>
+	</Containers>
 </WwiseDocument>
